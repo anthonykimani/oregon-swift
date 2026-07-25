@@ -1,0 +1,58 @@
+import dotenv from "dotenv";
+import { DataSource } from "typeorm";
+import { User } from "../models/user.entity";
+import { CustomerProfile } from "../models/customer-profile.entity";
+import { CourierProfile } from "../models/courier-profile.entity";
+import { ServiceType } from "../models/service-type.entity";
+import { Zone } from "../models/zone.entity";
+import { RateMatrix } from "../models/rate-matrix.entity";
+import { Delivery } from "../models/delivery.entity";
+import { TrackingEvent } from "../models/tracking-event.entity";
+import { ProofOfDelivery } from "../models/proof-of-delivery.entity";
+import { Invoice } from "../models/invoice.entity";
+import { InvoiceItem } from "../models/invoice-item.entity";
+import { Notification } from "../models/notification.entity";
+
+dotenv.config({ path: `.env.${process.env.NODE_ENV}` });
+
+const config = {
+  host: process.env.DB_HOST,
+  user: process.env.DB_USER,
+  password: process.env.DB_PASSWORD,
+  database: process.env.DB_NAME,
+  port: process.env.DB_PORT,
+  ssl: Number(process.env.DB_SSL) ? true : false,
+};
+
+const AppDataSource = new DataSource({
+  type: "postgres",
+  host: config.host,
+  port: Number(config.port) || 5432,
+  username: config.user,
+  password: config.password,
+  database: config.database,
+  ssl: config.ssl
+    ? {
+        rejectUnauthorized: false,
+      }
+    : config.ssl,
+  entities: [
+    User,
+    CustomerProfile,
+    CourierProfile,
+    ServiceType,
+    Zone,
+    RateMatrix,
+    Delivery,
+    TrackingEvent,
+    ProofOfDelivery,
+    Invoice,
+    InvoiceItem,
+    Notification,
+  ],
+  synchronize: true,
+  dropSchema: false,
+  logging: false,
+});
+
+export default AppDataSource;

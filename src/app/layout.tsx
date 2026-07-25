@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import { Aboreto, DM_Sans, Inter, Manrope, Outfit, Urbanist } from "next/font/google";
 import "./globals.css";
+import { Providers } from "@/components/providers";
+import { Toaster } from "@/components/ui/toaster";
 
 const aboreto = Aboreto({
   variable: "--font-aboreto",
@@ -49,7 +51,12 @@ export default function RootLayout({
       lang="en"
       className={`${aboreto.variable} ${dmSans.variable} ${inter.variable} ${manrope.variable} ${outfit.variable} ${urbanist.variable} h-full antialiased`}
     >
-      <body className="min-h-full flex flex-col">{children}</body>
+      <body className="min-h-full flex flex-col">
+        <Providers>
+          {children}
+          <Toaster />
+        </Providers>
+      </body>
     </html>
   );
 }
