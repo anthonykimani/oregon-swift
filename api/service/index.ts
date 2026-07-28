@@ -7,6 +7,9 @@ import corsOptions from "./configs/corsconfig";
 import AppDataSource from "./configs/ormconfig";
 
 import authRoutes from "./routes/index.auth";
+import adminRoutes from "./routes/index.admin";
+import customerRoutes from "./routes/index.customer";
+import courierRoutes from "./routes/index.courier";
 
 dotenv.config({ path: `.env.${process.env.NODE_ENV}` });
 
@@ -19,6 +22,9 @@ app.use(cors(corsOptions));
 app.use(express.json());
 
 app.use("/api/v1/auth", authRoutes);
+app.use("/api/v1/admin", adminRoutes);
+app.use("/api/v1", customerRoutes);
+app.use("/api/v1", courierRoutes);
 
 app.get("/health", (_req, res) => {
   res.status(200).json({

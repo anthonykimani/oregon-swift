@@ -1,253 +1,258 @@
 "use client";
 
+import { useState, useEffect } from "react";
+import { useSession } from "next-auth/react";
+import { useRouter } from "next/navigation";
 import {
-  ArrowDown,
-  CopySimple,
-  Tag,
-  ClockClockwise,
+  Package,
+  Truck,
+  Clock,
+  UserCircle,
   CheckCircle,
+  Cube,
   DotsThree,
 } from "@phosphor-icons/react";
 import { StatCard } from "@/components/ui/stat-card";
 import { StatusBadge } from "@/components/ui/status-badge";
 import { ActivityItem } from "@/components/ui/activity-item";
 import { PaginationBar } from "@/components/ui/pagination-bar";
-import { TableToolbar } from "@/components/ui/table-toolbar";
+import { api } from "@/lib/api";
 
-const stats = [
-  {
-    label: "Active Deliveries",
-    value: "14",
-    change: "+8%",
-    subtitle: "from last week",
-  },
-  {
-    label: "Delivery Perfomance",
-    value: "38",
-    change: "+8%",
-    subtitle: "from last week",
-  },
-  {
-    label: "Revenue",
-    value: "$32,000",
-    change: "+8%",
-    subtitle: "from last week",
-  },
-  {
-    label: "Wellness Streak",
-    value: "23 Days",
-    link: "View Progress",
-    subtitle: "from last week",
-  },
-];
+interface DashboardStats {
+  totalDeliveries: number;
+  activeDeliveries: number;
+  pendingPickups: number;
+  totalCouriers: number;
+  totalRevenueCents: number;
+  recentDeliveries: DeliveryItem[];
+  recentActivity: ActivityItemData[];
+}
 
-const shipments = [
-  {
-    id: "#SH9283746",
-    company: "TechGear Inc.",
-    category: "Electronics",
-    carrier: "FedEx",
-    route: "Los Angeles, CA → Chicago, IL",
-    date: "Mar 20, 2035",
-    status: "in-transit" as const,
-    statusLabel: "In Transit",
-  },
-  {
-    id: "#SH9182635",
-    company: "StyleHub Co.",
-    category: "Apparel",
-    carrier: "DHL",
-    route: "New York, NY → Atlanta, GA",
-    date: "Mar 19, 2035",
-    status: "out-for-delivery" as const,
-    statusLabel: "Out for Delivery",
-  },
-  {
-    id: "#SH9037821",
-    company: "FreshNest",
-    category: "Home & Kitchen",
-    carrier: "UPS",
-    route: "Dallas, TX → Miami, FL",
-    date: "Mar 18, 2035",
-    status: "delivered" as const,
-    statusLabel: "Delivered",
-  },
-  {
-    id: "#SH9374652",
-    company: "FitPlus Gear",
-    category: "Sports & Outdoors",
-    carrier: "USPS",
-    route: "Seattle, WA → Denver, CO",
-    date: "Mar 21, 2035",
-    status: "processing" as const,
-    statusLabel: "Processing",
-  },
-  {
-    id: "#SH9457830",
-    company: "AutoParts Pro",
-    category: "Automotive",
-    carrier: "Aramex",
-    route: "Detroit, MI → San Diego, CA",
-    date: "Mar 20, 2035",
-    status: "in-transit" as const,
-    statusLabel: "In Transit",
-  },
-];
+interface DeliveryItem {
+  id: string;
+  trackingNumber: string;
+  status: string;
+  pickupAddress: string;
+  dropoffAddress: string;
+  createdAt: string;
+}
 
-const activities = [
-  {
-    time: "12:00 PM",
-    bg: "#FCDEE0",
-    icon: CopySimple,
-    text: "User @TechGuru99 submitted a bulk shipment request",
-  },
-  {
-    time: "11:30 AM",
-    bg: "#F0F0F0",
-    icon: Tag,
-    text: "Customer Support @SupportKen added a priority tag to Order ID 77889JKL",
-  },
-  {
-    time: "11:00 AM",
-    bg: "#FCDEE0",
-    icon: ClockClockwise,
-    text: "User @SallyMae88 initiated a return process for Order ID 44556GHI",
-  },
-  {
-    time: "10:15 AM",
-    bg: "#F0F0F0",
-    icon: CheckCircle,
-    text: "Administrator @AdminLisa resolved a delivery issue for Order ID 12345XYZ",
-  },
-  {
-    time: "09:45 AM",
-    bg: "#FCDEE0",
-    icon: CopySimple,
-    text: "User @Mickey92 updated the shipping address for Order ID 67890ABC",
-  },
-];
+interface ActivityItemData {
+  id: string;
+  status: string;
+  note: string;
+  createdAt: string;
+  trackingNumber: string;
+  deliveryId: string;
+}
+
+const statusLabels: Record<string, string> = {
+  pending: "Pending",
+  processing: "Processing",
+  "picked-up": "Picked Up",
+  "in-transit": "In Transit",
+  "out-for-delivery": "Out for Delivery",
+  delivered: "Delivered",
+  cancelled: "Cancelled",
+};
+
+const statusVariants: Record<string, "pending" | "processing" | "in-transit" | "out-for-delivery" | "delivered" | "cancelled"> = {
+  pending: "pending",
+  processing: "processing",
+  "picked-up": "in-transit",
+  "in-transit": "in-transit",
+  "out-for-delivery": "out-for-delivery",
+  delivered: "delivered",
+  cancelled: "cancelled",
+};
+
+const activityIcons: Record<string, React.ElementType> = {
+  pending: Clock,
+  processing: Package,
+  "in-transit": Truck,
+  "out-for-delivery": Truck,
+  delivered: CheckCircle,
+  cancelled: Package,
+};
+
+const activityBg: Record<string, string> = {
+  pending: "#FFF3D6",
+  processing: "#E3EDFF",
+  "in-transit": "#F0F0F0",
+  "out-for-delivery": "#FCDEE0",
+  delivered: "#D9F9E7",
+  cancelled: "#F0F0F0",
+};
+
+function formatCents(cents: number) {
+  return `$${(cents / 100).toLocaleString("en-US", { minimumFractionDigits: 2 })}`;
+}
+
+function formatDate(dateStr: string) {
+  return new Date(dateStr).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
+}
+
+function timeAgo(dateStr: string) {
+  const diff = Date.now() - new Date(dateStr).getTime();
+  const mins = Math.floor(diff / 60000);
+  if (mins < 1) return "just now";
+  if (mins < 60) return `${mins}m ago`;
+  const hours = Math.floor(mins / 60);
+  if (hours < 24) return `${hours}h ago`;
+  const days = Math.floor(hours / 24);
+  return `${days}d ago`;
+}
 
 export default function AdminDashboard() {
+  const { data: session, status } = useSession();
+  const router = useRouter();
+  const [stats, setStats] = useState<DashboardStats | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+
+  const token = session?.accessToken;
+
+  useEffect(() => {
+    if (status === "unauthenticated") {
+      router.push("/sign-in");
+      return;
+    }
+    if (!token) return;
+    api<DashboardStats>("/admin/dashboard/stats", { token }).then((res) => {
+      if (res.status === 200 && res.data) setStats(res.data);
+      else setError(res.errors?.[0] || "Failed to load dashboard");
+    }).catch(() => setError("Failed to load dashboard")).finally(() => setLoading(false));
+  }, [token, status, router]);
+
+  const deliveries = stats?.recentDeliveries ?? [];
+  const activity = stats?.recentActivity ?? [];
+
   return (
     <div className="h-full flex flex-col bg-[#F5F4FD]">
       <div className="px-5 pt-10 pb-5">
+        {error && (
+          <div className="bg-[#FCDEE0] text-[#C0392B] text-sm rounded-lg px-4 py-3 mb-4">{error}</div>
+        )}
         <div className="grid grid-cols-4 gap-[10px]">
-          {stats.map((stat) => (
-            <StatCard key={stat.label} {...stat} />
-          ))}
+          {loading ? (
+            <>
+              {[...Array(4)].map((_, i) => (
+                <div key={i} className="bg-white border border-[#E3E6ED] rounded-lg p-5 animate-pulse min-h-[135px]">
+                  <div className="h-3 w-24 bg-[#E3E6ED] rounded mb-5" />
+                  <div className="h-7 w-16 bg-[#E3E6ED] rounded mb-2" />
+                  <div className="h-3 w-28 bg-[#E3E6ED] rounded" />
+                </div>
+              ))}
+            </>
+          ) : (
+            <>
+              <StatCard label="Active Deliveries" value={String(stats?.activeDeliveries ?? 0)} subtitle="currently in progress" />
+              <StatCard label="Pending Pickups" value={String(stats?.pendingPickups ?? 0)} subtitle="awaiting pickup" />
+              <StatCard label="Revenue" value={formatCents(stats?.totalRevenueCents ?? 0)} subtitle="from paid invoices" />
+              <StatCard label="Active Couriers" value={String(stats?.totalCouriers ?? 0)} subtitle="available for dispatch" />
+            </>
+          )}
         </div>
       </div>
 
       <div className="px-5 flex-1 flex gap-[10px] min-h-0">
         <div className="flex-1 bg-[#FEFEFE] border border-[#E3E6ED] rounded-xl p-4 flex flex-col min-w-0">
-          <TableToolbar title="Recent Shipments" />
+          <div className="flex items-center justify-between mb-3">
+            <h3 className="text-sm font-manrope text-[#333333]">Recent Deliveries</h3>
+          </div>
           <div className="flex-1 overflow-auto">
-            <table className="w-full text-[10px] font-manrope">
-              <thead>
-                <tr className="bg-[#DCE8D6] rounded-lg">
-                  <th className="w-[12px] p-0 pl-2 py-3">
-                    <div className="w-3 h-3 bg-[#F0F0F0] border border-[#E0E0E0] rounded-sm" />
-                  </th>
-                  <th className="text-left text-[#333333] font-medium py-3 px-2">
-                    <div className="flex items-center gap-1">
-                      Shipping ID
-                      <ArrowDown size={10} color="#333333" />
-                    </div>
-                  </th>
-                  <th className="text-left text-[#333333] font-medium py-3 px-2">
-                    <div className="flex items-center gap-1">
-                      Company
-                      <ArrowDown size={10} color="#333333" />
-                    </div>
-                  </th>
-                  <th className="text-left text-[#333333] font-medium py-3 px-2">
-                    <div className="flex items-center gap-1">
-                      Carriers
-                      <ArrowDown size={10} color="#333333" />
-                    </div>
-                  </th>
-                  <th className="text-left text-[#333333] font-medium py-3 px-2">
-                    <div className="flex items-center gap-1">
-                      Route
-                      <ArrowDown size={10} color="#333333" />
-                    </div>
-                  </th>
-                  <th className="text-left text-[#333333] font-medium py-3 px-2">
-                    <div className="flex items-center gap-1">
-                      Shipping Date
-                      <ArrowDown size={10} color="#333333" />
-                    </div>
-                  </th>
-                  <th className="text-left text-[#333333] font-medium py-3 px-2">
-                    <div className="flex items-center gap-1">
-                      Status
-                      <ArrowDown size={10} color="#333333" />
-                    </div>
-                  </th>
-                </tr>
-              </thead>
-              <tbody>
-                {shipments.map((row, i) => (
-                  <tr
-                    key={row.id}
-                    className="border-b border-[#E0E0E0] last:border-0"
-                  >
-                    <td className="p-0 pl-2 py-3">
-                      <div className="w-3 h-3 bg-[#F0F0F0] border border-[#E0E0E0] rounded-sm" />
-                    </td>
-                    <td className="text-[#173420] py-3 px-2">{row.id}</td>
-                    <td className="py-3 px-2">
-                      <div className="text-[#333333]">{row.company}</div>
-                      <div className="text-[#757575]">{row.category}</div>
-                    </td>
-                    <td className="text-xs text-[#333333] py-3 px-2">
-                      {row.carrier}
-                    </td>
-                    <td className="text-[#333333] py-3 px-2 whitespace-nowrap">
-                      {row.route}
-                    </td>
-                    <td className="text-[#333333] py-3 px-2 whitespace-nowrap">
-                      {row.date}
-                    </td>
-                    <td className="py-3 px-2">
-                      <StatusBadge label={row.statusLabel} status={row.status} />
-                    </td>
-                  </tr>
+            {loading ? (
+              <div className="animate-pulse">
+                {[...Array(4)].map((_, i) => (
+                  <div key={i} className="flex items-center gap-4 py-3 border-b border-[#E0E0E0]">
+                    <div className="h-3 w-24 bg-[#E3E6ED] rounded" />
+                    <div className="h-3 w-20 bg-[#E3E6ED] rounded" />
+                    <div className="h-3 w-20 bg-[#E3E6ED] rounded" />
+                    <div className="h-5 w-20 bg-[#E3E6ED] rounded-full" />
+                  </div>
                 ))}
-              </tbody>
-            </table>
+              </div>
+            ) : deliveries.length === 0 ? (
+              <div className="flex items-center justify-center h-full text-sm text-[#8094A7] font-inter">
+                No deliveries yet
+              </div>
+            ) : (
+              <table className="w-full text-[10px] font-manrope">
+                <thead>
+                  <tr className="bg-[#DCE8D6] rounded-lg">
+                    <th className="text-left text-[#333333] font-medium py-3 px-2">Tracking</th>
+                    <th className="text-left text-[#333333] font-medium py-3 px-2">Pickup</th>
+                    <th className="text-left text-[#333333] font-medium py-3 px-2">Dropoff</th>
+                    <th className="text-left text-[#333333] font-medium py-3 px-2">Date</th>
+                    <th className="text-left text-[#333333] font-medium py-3 px-2">Status</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {deliveries.map((d) => (
+                    <tr
+                      key={d.id}
+                      onClick={() => router.push(`/admin/deliveries/${d.id}`)}
+                      className="border-b border-[#E0E0E0] last:border-0 cursor-pointer hover:bg-[#F4F8F2] transition-colors"
+                    >
+                      <td className="text-[#173420] py-3 px-2 font-medium">{d.trackingNumber}</td>
+                      <td className="text-[#333333] py-3 px-2 max-w-[140px] truncate">{d.pickupAddress || "—"}</td>
+                      <td className="text-[#333333] py-3 px-2 max-w-[140px] truncate">{d.dropoffAddress || "—"}</td>
+                      <td className="text-[#333333] py-3 px-2 whitespace-nowrap">{formatDate(d.createdAt)}</td>
+                      <td className="py-3 px-2">
+                        <StatusBadge
+                          label={statusLabels[d.status] || d.status}
+                          status={statusVariants[d.status] || "pending"}
+                        />
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            )}
           </div>
         </div>
 
         <div className="w-[299px] bg-[#FEFEFE] border border-[#E3E6ED] rounded-xl p-4 flex flex-col flex-shrink-0">
           <div className="flex items-center justify-between mb-3">
-            <h3 className="text-sm font-manrope text-[#333333]">
-              Recent Activity
-            </h3>
+            <h3 className="text-sm font-manrope text-[#333333]">Recent Activity</h3>
             <button className="w-7 h-7 flex items-center justify-center bg-[#F0F0F0] rounded-lg hover:bg-gray-100 transition-colors">
               <DotsThree size={16} color="#333333" />
             </button>
           </div>
           <div className="flex-1 overflow-auto space-y-0">
-            {activities.map((activity, i) => (
-              <ActivityItem
-                key={i}
-                icon={activity.icon}
-                iconBg={activity.bg}
-                text={activity.text}
-                time={activity.time}
-                isLast={i === activities.length - 1}
-              />
-            ))}
+            {loading ? (
+              <div className="animate-pulse space-y-4">
+                {[...Array(4)].map((_, i) => (
+                  <div key={i} className="flex gap-3">
+                    <div className="w-9 h-9 rounded-full bg-[#E3E6ED] shrink-0" />
+                    <div className="flex-1">
+                      <div className="h-3 w-32 bg-[#E3E6ED] rounded mb-1" />
+                      <div className="h-3 w-16 bg-[#E3E6ED] rounded" />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : activity.length === 0 ? (
+              <div className="flex items-center justify-center h-full text-sm text-[#8094A7] font-inter">
+                No recent activity
+              </div>
+            ) : (
+              activity.map((a, i) => (
+                <ActivityItem
+                  key={a.id}
+                  icon={activityIcons[a.status] || Cube}
+                  iconBg={activityBg[a.status] || "#F0F0F0"}
+                  text={`${a.trackingNumber} — ${a.note || ""}`}
+                  time={timeAgo(a.createdAt)}
+                  isLast={i === activity.length - 1}
+                />
+              ))
+            )}
           </div>
         </div>
       </div>
 
-      <PaginationBar
-        totalEntries={0}
-        startEntry={0}
-        endEntry={0}
-      />
+      <PaginationBar totalEntries={deliveries.length} startEntry={0} endEntry={deliveries.length} />
     </div>
   );
 }

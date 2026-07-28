@@ -6,6 +6,7 @@ import {
   House,
   Package,
   Scan,
+  ClipboardText,
   Truck,
   UserCircle,
   Bank,
@@ -24,8 +25,9 @@ const navSections = [
     label: "MAIN MENU",
     items: [
       { name: "Dashboard", icon: House, path: "/admin" },
-      { name: "Shipments", icon: Package, path: "/admin/shipments" },
+      { name: "Deliveries", icon: Package, path: "/admin/deliveries" },
       { name: "Tracking", icon: Scan, path: "/admin/tracking" },
+      { name: "Applications", icon: ClipboardText, path: "/admin/applications" },
     ],
   },
   {
@@ -153,9 +155,9 @@ export function Sidebar({ open, onToggle }: SidebarProps) {
         })}
       </div>
 
-      {!open && (
+      {open && (
         <button
-          className="fixed lg:hidden inset-0 z-10"
+          className="fixed lg:hidden inset-0 z-10 bg-black/20"
           onClick={onToggle}
         />
       )}

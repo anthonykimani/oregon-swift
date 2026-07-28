@@ -48,8 +48,7 @@ export default function WhyChooseUs() {
       <div className="w-full max-w-[1170px] mx-auto">
         <div className="mb-12">
           <span
-            className="font-outfit text-base uppercase"
-            style={{ color: "#0a47c9" }}
+            className="font-outfit text-base uppercase text-brand"
           >
             WHY CHOOSE US
           </span>

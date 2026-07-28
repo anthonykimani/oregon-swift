@@ -16,6 +16,24 @@ export class Zone extends BaseEntity {
   @Column({ length: 50, nullable: true })
   state: string;
 
+  @Column({ type: "json", nullable: true })
+  boundaries: number[][][];
+
   @Column({ default: true })
   active: boolean;
+
+  @Column({ length: 10, default: "radial" })
+  zoneType: string;
+
+  @Column({ type: "float", nullable: true })
+  centerLat: number;
+
+  @Column({ type: "float", nullable: true })
+  centerLng: number;
+
+  @Column({ type: "int", nullable: true })
+  radiusMiles: number;
+
+  @Column({ length: 7, nullable: true })
+  color: string;
 }

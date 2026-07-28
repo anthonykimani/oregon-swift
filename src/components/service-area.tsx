@@ -65,10 +65,9 @@ export default function ServiceArea() {
             </ul>
 
             <a
-              href="#"
-              className="font-manrope text-base text-white inline-block mt-8 md:mt-12"
+              href="/sign-up"
+              className="font-manrope text-base text-white inline-block mt-8 md:mt-12 bg-brand"
               style={{
-                backgroundColor: "#171717",
                 padding: "14px 32px",
                 borderRadius: "100px",
               }}

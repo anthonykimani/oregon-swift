@@ -23,8 +23,7 @@ export default function Testimonials() {
         <div className="flex flex-col lg:flex-row lg:justify-between gap-12 lg:gap-0">
           <div className="w-full lg:w-[549px] shrink-0">
             <span
-              className="font-outfit text-base uppercase"
-              style={{ color: "#0a47c9" }}
+              className="font-outfit text-base uppercase text-brand"
             >
               TESTIMONIALS
             </span>
@@ -67,8 +66,7 @@ export default function Testimonials() {
                 </svg>
               </div>
               <div
-                className="w-14 h-14 rounded-full flex items-center justify-center"
-                style={{ backgroundColor: "#0a47c9" }}
+                className="w-14 h-14 rounded-full flex items-center justify-center bg-brand"
               >
                 <svg
                   width="24"

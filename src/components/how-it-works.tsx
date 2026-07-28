@@ -30,7 +30,7 @@ export default function HowItWorks() {
       <div className="w-full max-w-[1170px] mx-auto">
         <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4 mb-12">
           <div>
-            <span className="font-outfit text-base uppercase" style={{ color: "#042f89" }}>
+            <span className="font-outfit text-base uppercase text-brand">
               HOW IT WORKS
             </span>
             <h2 className="font-inter text-3xl md:text-4xl mt-1" style={{ color: "#01081b" }}>
@@ -38,8 +38,8 @@ export default function HowItWorks() {
             </h2>
           </div>
           <a
-            href="#"
-            className="font-inter text-xs bg-[#0a47c9] text-white px-5 py-2.5 rounded-xl shrink-0 text-nowrap w-fit hover:opacity-90 transition-opacity"
+            href="/sign-up"
+            className="font-inter text-xs bg-brand text-white px-5 py-2.5 rounded-xl shrink-0 text-nowrap w-fit hover:opacity-90 transition-opacity"
           >
             Get A Quote
           </a>

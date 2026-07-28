@@ -177,6 +177,45 @@ class AuthController extends Controller {
       return res.send(super.response(super._500, null, super.ex(error)));
     }
   }
+
+  public static async updateMe(req: Request, res: Response) {
+    try {
+      const repo: UserRepository = new UserRepository();
+      const user = await repo.getUserById(req.user!.id);
+
+      if (!user) {
+        return res.send(super.response(super._404, null, ["User not found"]));
+      }
+
+      const { firstname, lastname, phoneNumber } = req.body;
+
+      if (firstname !== undefined) user.firstname = firstname;
+      if (lastname !== undefined) user.lastname = lastname;
+      if (phoneNumber !== undefined) user.phoneNumber = phoneNumber;
+      user.lastUpdated = new Date();
+
+      const saved = await repo.saveUser(user);
+      if (!saved) {
+        return res.send(super.response(super._500, null, ["Failed to update profile"]));
+      }
+
+      return res.send(
+        super.response(super._200, {
+          id: saved.id,
+          email: saved.email,
+          firstname: saved.firstname,
+          lastname: saved.lastname,
+          username: saved.username,
+          role: saved.role,
+          phoneNumber: saved.phoneNumber,
+          emailConfirmed: saved.emailConfirmed,
+          created: saved.created,
+        })
+      );
+    } catch (error) {
+      return res.send(super.response(super._500, null, super.ex(error)));
+    }
+  }
 }
 
 export default AuthController;

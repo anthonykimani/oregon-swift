@@ -7,7 +7,27 @@ interface ApiResponse<T = any> {
   errors: string[];
 }
 
-function getToken(): string | null {
+export async function api<T = any>(
+  path: string,
+  options: RequestInit & { token?: string } = {}
+): Promise<ApiResponse<T>> {
+  const { token: explicitToken, ...fetchOptions } = options;
+  const token = explicitToken || getTokenFromStorage();
+
+  const res = await fetch(`${API_BASE}${path}`, {
+    ...fetchOptions,
+    headers: {
+      "Content-Type": "application/json",
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      ...fetchOptions.headers,
+    },
+  });
+
+  const json: ApiResponse<T> = await res.json();
+  return json;
+}
+
+function getTokenFromStorage(): string | null {
   if (typeof window === "undefined") return null;
   return localStorage.getItem("oc_token");
 }
@@ -18,23 +38,4 @@ export function setToken(token: string) {
 
 export function clearToken() {
   localStorage.removeItem("oc_token");
-}
-
-export async function api<T = any>(
-  path: string,
-  options: RequestInit = {}
-): Promise<ApiResponse<T>> {
-  const token = getToken();
-
-  const res = await fetch(`${API_BASE}${path}`, {
-    ...options,
-    headers: {
-      "Content-Type": "application/json",
-      ...(token ? { Authorization: `Bearer ${token}` } : {}),
-      ...options.headers,
-    },
-  });
-
-  const json: ApiResponse<T> = await res.json();
-  return json;
 }

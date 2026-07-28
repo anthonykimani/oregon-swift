@@ -9,10 +9,7 @@ export default function Hero() {
       <div className="absolute inset-0 bg-gradient-to-r from-white via-white/80 to-transparent md:via-white/60" />
       <div className="relative w-full px-6 lg:px-10 xl:px-24 py-16 md:py-24">
         <div className="max-w-[750px]">
-          <h1
-            className="font-clash-display text-4xl md:text-6xl leading-tight"
-            style={{ color: "#042f89" }}
-          >
+          <h1 className="font-clash-display text-4xl md:text-6xl leading-tight text-brand">
             Reliable Last Mile Delivery
             <br />
             Across the Pacific Northwest
@@ -25,14 +22,14 @@ export default function Hero() {
           </p>
           <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 sm:gap-4 mt-10 md:mt-12">
             <a
-              href="#"
-              className="font-inter text-xs bg-[#0a47c9] text-white px-5 py-2.5 rounded-xl shrink-0 text-nowrap hover:opacity-90 transition-opacity"
+              href="/sign-up"
+              className="font-inter text-xs bg-brand text-white px-5 py-2.5 rounded-xl shrink-0 text-nowrap hover:opacity-90 transition-opacity"
             >
               Get A Quote
             </a>
             <a
-              href="#"
-              className="font-inter text-xs text-[#0a47c9] bg-white border border-[#e5e5e5] px-5 py-2.5 rounded-xl shrink-0 text-nowrap hover:border-[#0a47c9] transition-colors"
+              href="/sign-in"
+              className="font-inter text-xs text-brand bg-white border border-[#e5e5e5] px-5 py-2.5 rounded-xl shrink-0 text-nowrap hover:border-brand transition-colors"
             >
               Request Dispatch
             </a>

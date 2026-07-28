@@ -20,6 +20,9 @@ export default function Navbar() {
             {item}
           </a>
         ))}
+        <a href="/tracking" className="font-dm-sans text-sm xl:text-base text-foreground hover:text-brand transition-colors whitespace-nowrap">
+          Track
+        </a>
       </div>
 
       <div className="hidden lg:flex items-center gap-2 xl:gap-3">
@@ -28,10 +31,10 @@ export default function Navbar() {
           <span className="font-dm-sans text-sm text-foreground whitespace-nowrap">United States</span>
           <CaretDown size={10} className="text-foreground shrink-0" weight="bold" />
         </div>
-        <a href="#" className="font-inter text-xs bg-brand text-white px-4 xl:px-5 py-2.5 rounded-xl whitespace-nowrap hover:opacity-90 transition-opacity">
+        <a href="/sign-up" className="font-inter text-xs bg-brand text-white px-4 xl:px-5 py-2.5 rounded-xl whitespace-nowrap hover:opacity-90 transition-opacity">
           Get started
         </a>
-        <a href="#" className="font-inter text-xs text-brand border border-[#e5e5e5] px-4 xl:px-5 py-2.5 rounded-xl whitespace-nowrap hover:border-brand transition-colors">
+        <a href="/sign-in" className="font-inter text-xs text-brand border border-[#e5e5e5] px-4 xl:px-5 py-2.5 rounded-xl whitespace-nowrap hover:border-brand transition-colors">
           SIGN iN
         </a>
       </div>
@@ -62,10 +65,10 @@ export default function Navbar() {
             <CaretDown size={10} className="text-foreground" weight="bold" />
           </div>
           <div className="flex flex-col gap-3 pt-2">
-            <a href="#" className="font-inter text-xs bg-brand text-white px-5 py-2.5 rounded-xl text-center hover:opacity-90 transition-opacity">
+            <a href="/sign-up" className="font-inter text-xs bg-brand text-white px-5 py-2.5 rounded-xl text-center hover:opacity-90 transition-opacity">
               Get started
             </a>
-            <a href="#" className="font-inter text-xs text-brand border border-[#e5e5e5] px-5 py-2.5 rounded-xl text-center hover:border-brand transition-colors">
+            <a href="/sign-in" className="font-inter text-xs text-brand border border-[#e5e5e5] px-5 py-2.5 rounded-xl text-center hover:border-brand transition-colors">
               SIGN iN
             </a>
           </div>

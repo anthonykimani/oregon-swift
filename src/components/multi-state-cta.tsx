@@ -7,7 +7,7 @@ export default function MultiStateCTA() {
         <div
           className="relative overflow-hidden"
           style={{
-            backgroundColor: "#0a47c9",
+            backgroundColor: "#173420",
             borderRadius: "24px",
           }}
         >
