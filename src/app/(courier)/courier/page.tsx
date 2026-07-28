@@ -148,7 +148,7 @@ export default function CourierHome() {
             {activeJobs.map((job) => (
               <div
                 key={job.id}
-                onClick={() => router.push(`/courier/jobs/${job.id}`)}
+                onClick={() => router.push(`/courier/deliveries?id=${job.id}`)}
                 className="bg-white border border-[#E3E6ED] rounded-xl p-4 shadow-sm cursor-pointer hover:border-[#173420] transition-colors"
               >
                 <div className="flex items-center justify-between mb-3">

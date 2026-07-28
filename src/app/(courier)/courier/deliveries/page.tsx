@@ -1,9 +1,9 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { Suspense, useState, useEffect } from "react";
 import { useSession } from "next-auth/react";
-import { useRouter } from "next/navigation";
-import { MapPin, Clock, Truck, Cube, Phone, ArrowRight, Funnel, MagnifyingGlass } from "@phosphor-icons/react";
+import { useRouter, useSearchParams } from "next/navigation";
+import { MapPin, Clock, Truck, Cube, Phone, ArrowRight, Funnel, MagnifyingGlass, CaretLeft, CheckCircle, Package, XCircle } from "@phosphor-icons/react";
 import { StatusBadge } from "@/components/ui/status-badge";
 import { Input } from "@/components/ui/input";
 import { api } from "@/lib/api";
@@ -21,6 +21,23 @@ interface DeliveryItem {
   packageDesc: string;
   packagePieces: number;
   packageWeight: string;
+  createdAt: string;
+}
+
+interface DeliveryDetail {
+  id: string;
+  trackingNumber: string;
+  status: string;
+  pickupAddress: string;
+  pickupContactName: string;
+  pickupContactPhone: string;
+  dropoffAddress: string;
+  dropoffContactName: string;
+  dropoffContactPhone: string;
+  packageDesc: string;
+  packagePieces: number;
+  packageWeight: string;
+  packageFragile: boolean;
   createdAt: string;
 }
 
@@ -44,19 +61,178 @@ const statusVariants: Record<string, "pending" | "processing" | "in-transit" | "
   cancelled: "cancelled",
 };
 
-const statusFilters = ["All", "Active", "Pending", "Picked Up", "In Transit", "Out for Delivery", "Delivered", "Failed Attempt", "Cancelled"];
+const statusActions: { status: string; label: string; icon: React.ElementType; color: string }[] = [
+  { status: "picked-up", label: "Picked Up", icon: Package, color: "#173420" },
+  { status: "in-transit", label: "In Transit", icon: Truck, color: "#3D724D" },
+  { status: "out-for-delivery", label: "Out for Delivery", icon: Truck, color: "#F3BC24" },
+  { status: "delivered", label: "Delivered", icon: CheckCircle, color: "#007837" },
+  { status: "failed-attempt", label: "Failed Attempt", icon: XCircle, color: "#F04A4A" },
+];
 
+const statusFilters = ["All", "Active", "Pending", "Picked Up", "In Transit", "Out for Delivery", "Delivered", "Failed Attempt", "Cancelled"];
 const activeStatuses = ["pending", "picked-up", "in-transit", "out-for-delivery", "failed-attempt"];
 
-export default function CourierDeliveries() {
+function JobDetailView({ id, token, onBack }: { id: string; token: string; onBack: () => void }) {
+  const [job, setJob] = useState<DeliveryDetail | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [updating, setUpdating] = useState(false);
+  const [error, setError] = useState("");
+
+  useEffect(() => {
+    if (!token) return;
+    api<DeliveryDetail>(`/courier/deliveries/${id}`, { token }).then((res) => {
+      if (res.status === 200 && res.data) setJob(res.data);
+      else setError("Job not found");
+    }).catch(() => setError("Failed to load")).finally(() => setLoading(false));
+  }, [token, id]);
+
+  async function handleStatusUpdate(status: string) {
+    if (!token) return;
+    setUpdating(true);
+    setError("");
+    const res = await api(`/courier/deliveries/${id}/status`, {
+      method: "PATCH",
+      token,
+      body: JSON.stringify({ status }),
+    });
+    setUpdating(false);
+    if (res.status === 200 && res.data) {
+      setJob(res.data.delivery);
+    } else {
+      setError(res.errors?.[0] || "Failed to update status");
+    }
+  }
+
+  if (loading) {
+    return (
+      <div className="h-full flex items-center justify-center">
+        <div className="animate-pulse text-sm text-[#8094A7]">Loading job details...</div>
+      </div>
+    );
+  }
+
+  if (error && !job) {
+    return (
+      <div className="h-full flex items-center justify-center">
+        <div className="text-center">
+          <p className="text-sm text-[#C0392B] mb-3">{error}</p>
+          <button onClick={onBack} className="text-sm text-[#173420] hover:underline">Back to jobs</button>
+        </div>
+      </div>
+    );
+  }
+
+  if (!job) return null;
+
+  const isComplete = ["delivered", "cancelled", "failed-attempt"].includes(job.status);
+
+  return (
+    <div className="h-full flex flex-col">
+      <div className="px-4 sm:px-6 pt-6 pb-4">
+        <button onClick={onBack} className="flex items-center gap-1 text-sm text-[#173420] mb-3 font-inter">
+          <CaretLeft size={16} /> Back
+        </button>
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-lg font-clash-display font-semibold text-[#173420]">{job.trackingNumber}</h1>
+            <div className="mt-1">
+              <StatusBadge label={statusLabels[job.status] || job.status} status={statusVariants[job.status] || "pending"} />
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div className="px-4 sm:px-6 flex-1 overflow-y-auto pb-20 space-y-4">
+        <div className="bg-white border border-[#E3E6ED] rounded-xl p-4 shadow-sm">
+          <h3 className="flex items-center gap-2 text-sm font-semibold text-[#173420] mb-3">
+            <MapPin size={16} className="text-[#3D724D]" /> Pickup Location
+          </h3>
+          <p className="text-sm text-[#333333]">{job.pickupAddress || "—"}</p>
+          {(job.pickupContactName || job.pickupContactPhone) && (
+            <div className="flex items-center gap-2 mt-2 text-xs text-[#666D80]">
+              <Phone size={12} />
+              <span>{job.pickupContactName}{job.pickupContactPhone ? ` — ${job.pickupContactPhone}` : ""}</span>
+            </div>
+          )}
+        </div>
+
+        <div className="bg-white border border-[#E3E6ED] rounded-xl p-4 shadow-sm">
+          <h3 className="flex items-center gap-2 text-sm font-semibold text-[#173420] mb-3">
+            <MapPin size={16} className="text-[#F04A4A]" /> Dropoff Location
+          </h3>
+          <p className="text-sm text-[#333333]">{job.dropoffAddress || "—"}</p>
+          {(job.dropoffContactName || job.dropoffContactPhone) && (
+            <div className="flex items-center gap-2 mt-2 text-xs text-[#666D80]">
+              <Phone size={12} />
+              <span>{job.dropoffContactName}{job.dropoffContactPhone ? ` — ${job.dropoffContactPhone}` : ""}</span>
+            </div>
+          )}
+        </div>
+
+        <div className="bg-white border border-[#E3E6ED] rounded-xl p-4 shadow-sm">
+          <h3 className="flex items-center gap-2 text-sm font-semibold text-[#173420] mb-3">
+            <Cube size={16} className="text-[#3D724D]" /> Package Details
+          </h3>
+          <p className="text-sm text-[#333333]">{job.packageDesc || "—"}</p>
+          <p className="text-xs text-[#8094A7] mt-1">
+            {job.packagePieces} piece{job.packagePieces > 1 ? "s" : ""}
+            {job.packageWeight ? ` · ${job.packageWeight} lbs` : ""}
+            {job.packageFragile ? " · Fragile" : ""}
+          </p>
+        </div>
+
+        {error && (
+          <div className="bg-[#FCDEE0] text-[#C0392B] text-sm rounded-lg px-4 py-3">{error}</div>
+        )}
+
+        {!isComplete && (
+          <div className="bg-white border border-[#E3E6ED] rounded-xl p-4 shadow-sm">
+            <h3 className="text-sm font-semibold text-[#173420] mb-3">Update Status</h3>
+            <div className="grid grid-cols-2 gap-2">
+              {statusActions.map((action) => {
+                const Icon = action.icon;
+                const disabled = updating || job.status === action.status;
+                return (
+                  <button
+                    key={action.status}
+                    onClick={() => handleStatusUpdate(action.status)}
+                    disabled={disabled}
+                    className="flex items-center gap-2 px-3 py-3 rounded-lg text-xs font-semibold border transition-all disabled:opacity-40 disabled:cursor-not-allowed"
+                    style={{
+                      color: action.color,
+                      borderColor: disabled ? "#E3E6ED" : action.color,
+                      backgroundColor: disabled ? "#F9F9F9" : `${action.color}08`,
+                    }}
+                  >
+                    <Icon size={16} weight="bold" />
+                    {updating ? "Updating..." : action.label}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function CourierDeliveriesContent() {
   const { data: session } = useSession();
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const detailId = searchParams.get("id");
+
+  const token = session?.accessToken;
+
+  if (detailId && token) {
+    return <JobDetailView id={detailId} token={token} onBack={() => router.push("/courier/deliveries")} />;
+  }
+
   const [deliveries, setDeliveries] = useState<DeliveryItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [statusFilter, setStatusFilter] = useState("All");
   const [search, setSearch] = useState("");
-
-  const token = session?.accessToken;
 
   useEffect(() => {
     if (!token) return;
@@ -90,10 +266,7 @@ export default function CourierDeliveries() {
 
       <div className="px-4 sm:px-6 pb-4 space-y-3">
         <div className="relative">
-          <MagnifyingGlass
-            size={16}
-            className="absolute left-3 top-1/2 -translate-y-1/2 text-[#8094A7]"
-          />
+          <MagnifyingGlass size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-[#8094A7]" />
           <Input
             placeholder="Search by tracking number or address..."
             value={search}
@@ -148,7 +321,7 @@ export default function CourierDeliveries() {
             {filtered.map((job) => (
               <div
                 key={job.id}
-                onClick={() => router.push(`/courier/jobs/${job.id}`)}
+                onClick={() => router.push(`/courier/deliveries?id=${job.id}`)}
                 className="bg-white border border-[#E3E6ED] rounded-xl p-4 shadow-sm cursor-pointer hover:border-[#173420] transition-colors"
               >
                 <div className="flex items-center justify-between mb-3">
@@ -192,5 +365,13 @@ export default function CourierDeliveries() {
         )}
       </div>
     </div>
+  );
+}
+
+export default function CourierDeliveriesPage() {
+  return (
+    <Suspense fallback={<div className="h-full flex items-center justify-center"><div className="animate-pulse text-sm text-[#8094A7]">Loading...</div></div>}>
+      <CourierDeliveriesContent />
+    </Suspense>
   );
 }

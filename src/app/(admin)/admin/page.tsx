@@ -191,7 +191,7 @@ export default function AdminDashboard() {
                   {deliveries.map((d) => (
                     <tr
                       key={d.id}
-                      onClick={() => router.push(`/admin/deliveries/${d.id}`)}
+                      onClick={() => router.push(`/admin/deliveries?id=${d.id}`)}
                       className="border-b border-[#E0E0E0] last:border-0 cursor-pointer hover:bg-[#F4F8F2] transition-colors"
                     >
                       <td className="text-[#173420] py-3 px-2 font-medium">{d.trackingNumber}</td>
