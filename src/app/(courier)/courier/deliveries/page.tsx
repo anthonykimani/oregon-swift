@@ -224,11 +224,6 @@ function CourierDeliveriesContent() {
   const detailId = searchParams.get("id");
 
   const token = session?.accessToken;
-
-  if (detailId && token) {
-    return <JobDetailView id={detailId} token={token} onBack={() => router.push("/courier/deliveries")} />;
-  }
-
   const [deliveries, setDeliveries] = useState<DeliveryItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [statusFilter, setStatusFilter] = useState("All");
@@ -240,6 +235,10 @@ function CourierDeliveriesContent() {
       if (res.status === 200 && res.data) setDeliveries(res.data);
     }).finally(() => setLoading(false));
   }, [token]);
+
+  if (detailId && token) {
+    return <JobDetailView id={detailId} token={token} onBack={() => router.push("/courier/deliveries")} />;
+  }
 
   const filtered = deliveries.filter((d) => {
     if (statusFilter === "Active") {

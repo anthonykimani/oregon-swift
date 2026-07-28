@@ -274,11 +274,6 @@ function AdminDeliveriesContent() {
   const detailId = searchParams.get("id");
 
   const token = session?.accessToken;
-
-  if (detailId && token) {
-    return <AdminDeliveryDetailView id={detailId} token={token} onBack={() => router.push("/admin/deliveries")} />;
-  }
-
   const [deliveries, setDeliveries] = useState<DeliveryItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -308,6 +303,10 @@ function AdminDeliveriesContent() {
       fetchDeliveries();
     }
   }, [status, fetchDeliveries, router]);
+
+  if (detailId && token) {
+    return <AdminDeliveryDetailView id={detailId} token={token} onBack={() => router.push("/admin/deliveries")} />;
+  }
 
   const filtered = search
     ? deliveries.filter(
