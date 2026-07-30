@@ -7,6 +7,7 @@ const corsOptions = {
     "http://localhost:3000",
     "http://localhost:3001",
     process.env.FRONTEND_URL,
+    process.env.FRONTEND_URL_WWW,
   ].filter(Boolean) as string[],
   methods: "GET, HEAD, PUT, PATCH, POST, DELETE",
   preflightContinue: false,
