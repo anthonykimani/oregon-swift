@@ -3,25 +3,13 @@
 import { Suspense, useState, useEffect, useCallback } from "react";
 import { useSession } from "next-auth/react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { MagnifyingGlass, ArrowDown, CaretLeft, MapPin, Cube, User, Check } from "@phosphor-icons/react";
-import { Input } from "@/components/ui/input";
+import { MagnifyingGlass, CaretLeft, MapPin, Cube, User, Check, CalendarPlus, Package } from "@phosphor-icons/react";
 import { Button } from "@/components/ui/button";
 import { StatusBadge } from "@/components/ui/status-badge";
+import { DeliveryMetrics, type DeliveryMeta } from "@/components/admin/delivery-metrics";
+import { ShipmentList, type ShipmentItem } from "@/components/admin/shipment-list";
+import { AvgDeliveryTimeChart, BusyPeriodsHeatmap } from "@/components/admin/shipment-statistics";
 import { api } from "@/lib/api";
-
-interface DeliveryItem {
-  id: string;
-  trackingNumber: string;
-  status: string;
-  customerId: string;
-  customerName: string | null;
-  courierId: string | null;
-  courierName: string | null;
-  pickupAddress: string;
-  dropoffAddress: string;
-  packageDesc: string;
-  createdAt: string;
-}
 
 interface CourierOption {
   id: string;
@@ -267,6 +255,11 @@ function AdminDeliveryDetailView({ id, token, onBack }: { id: string; token: str
   );
 }
 
+interface DeliveriesPayload {
+  items: ShipmentItem[];
+  meta: DeliveryMeta;
+}
+
 function AdminDeliveriesContent() {
   const { data: session, status } = useSession();
   const router = useRouter();
@@ -274,7 +267,8 @@ function AdminDeliveriesContent() {
   const detailId = searchParams.get("id");
 
   const token = session?.accessToken;
-  const [deliveries, setDeliveries] = useState<DeliveryItem[]>([]);
+  const [items, setItems] = useState<ShipmentItem[]>([]);
+  const [meta, setMeta] = useState<DeliveryMeta | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [search, setSearch] = useState("");
@@ -282,9 +276,10 @@ function AdminDeliveriesContent() {
   const fetchDeliveries = useCallback(async () => {
     if (!session?.accessToken) return;
     try {
-      const res = await api<DeliveryItem[]>("/admin/deliveries", { token: session.accessToken });
+      const res = await api<DeliveriesPayload>("/admin/deliveries", { token: session.accessToken });
       if (res.status === 200 && res.data) {
-        setDeliveries(res.data);
+        setItems(res.data.items ?? []);
+        setMeta(res.data.meta ?? null);
       } else {
         setError(res.errors?.[0] || `API returned status ${res.status}`);
       }
@@ -308,94 +303,101 @@ function AdminDeliveriesContent() {
     return <AdminDeliveryDetailView id={detailId} token={token} onBack={() => router.push("/admin/deliveries")} />;
   }
 
-  const filtered = search
-    ? deliveries.filter(
-        (d) =>
-          d.trackingNumber.toLowerCase().includes(search.toLowerCase()) ||
-          (d.customerName || "").toLowerCase().includes(search.toLowerCase()) ||
-          (d.courierName || "").toLowerCase().includes(search.toLowerCase()) ||
-          (d.pickupAddress || "").toLowerCase().includes(search.toLowerCase()) ||
-          (d.dropoffAddress || "").toLowerCase().includes(search.toLowerCase())
-      )
-    : deliveries;
-
   return (
-    <div className="h-full flex flex-col bg-[#F5F4FD]">
-      <div className="px-5 pt-10 pb-5">
-        <div className="flex items-center justify-between mb-2">
+    <div className="min-h-full flex flex-col bg-[#F5F4FD]">
+      {/* Top bar */}
+      <div className="px-4 sm:px-5 pt-8 sm:pt-10 pb-4">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
           <div>
-            <h1 className="text-xl font-clash-display font-semibold text-[#173420]">Deliveries</h1>
-            <p className="text-sm text-[#8094A7] font-inter mt-1">{deliveries.length} total deliveries</p>
+            <h1 className="text-xl font-clash-display font-semibold text-[#052D50]">Deliveries</h1>
+            <p className="text-sm text-[#8094A7] font-inter mt-1">{meta?.totalDeliveries ?? items.length} total shipments</p>
+          </div>
+          <div className="flex items-center gap-2">
+            <Button className="h-9 px-4 bg-[#EFFEFA] hover:bg-[#DFF7F0] text-[#12806B] rounded-lg text-sm gap-1.5">
+              <CalendarPlus size={16} /> Schedule Delivery
+            </Button>
+            <Button className="h-9 px-4 bg-[#173420] hover:bg-[#1F4228] text-white rounded-lg text-sm gap-1.5">
+              <Package size={16} /> New Shipment
+            </Button>
           </div>
         </div>
-        <div className="relative mt-3">
-          <MagnifyingGlass size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-[#8094A7]" />
-          <Input
-            placeholder="Search by tracking number, customer, courier, or address..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="pl-9 h-9 bg-white border-[#E3E6ED] rounded-lg text-sm text-[#333333] placeholder:text-[#8094A7]"
-          />
+
+        {error && (
+          <div className="bg-[#FCDEE0] text-[#C0392B] text-sm rounded-lg px-4 py-3 mb-4">{error}</div>
+        )}
+      </div>
+
+      {/* Hero / search block */}
+      <div className="px-4 sm:px-5 pb-4">
+        <div className="bg-white border border-[#E3E6ED] rounded-lg px-5 py-8 flex flex-col items-center">
+          <h2 className="text-2xl font-clash-display font-semibold text-[#052D50] text-center">
+            Shipment Management
+          </h2>
+          <p className="text-sm font-inter text-[#8094A7] text-center mt-2 mb-5 max-w-md">
+            Search, track, and manage every delivery across Oregon City in one place.
+          </p>
+          <div className="relative w-full max-w-[500px]">
+            <MagnifyingGlass size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-[#45617D]" />
+            <input
+              placeholder="Search by tracking number, customer, courier, or address..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="w-full h-[38px] pl-9 pr-20 bg-white border border-[#E3E6ED] rounded-lg text-sm text-[#333333] placeholder:text-[#45617D] focus:outline-none focus:border-[#052D50]"
+            />
+            <span className="absolute right-2 top-1/2 -translate-y-1/2 h-6 px-2 flex items-center bg-[#F4F7FD] rounded text-[11px] font-manrope text-[#45617D]">
+              ⌘K
+            </span>
+          </div>
         </div>
       </div>
 
-      <div className="px-5 flex-1 min-h-0 pb-5">
-        <div className="bg-[#FEFEFE] border border-[#E3E6ED] rounded-xl p-4 flex flex-col min-w-0 h-full">
-          {error && (
-            <div className="bg-[#FCDEE0] text-[#C0392B] text-sm rounded-lg px-4 py-3 mb-4">{error}</div>
-          )}
+      {/* Metrics */}
+      <div className="px-4 sm:px-5 pb-4">
+        {loading ? (
+          <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-[10px]">
+            {[...Array(4)].map((_, i) => (
+              <div key={i} className="bg-white border border-[#E3E6ED] rounded-lg p-5 animate-pulse min-h-[120px]">
+                <div className="h-3 w-24 bg-[#E3E6ED] rounded mb-5" />
+                <div className="h-7 w-16 bg-[#E3E6ED] rounded mb-2" />
+                <div className="h-3 w-28 bg-[#E3E6ED] rounded" />
+              </div>
+            ))}
+          </div>
+        ) : (
+          <DeliveryMetrics meta={meta} />
+        )}
+      </div>
 
-          {loading ? (
-            <div className="flex items-center justify-center flex-1 text-sm text-[#8094A7] font-inter">Loading deliveries...</div>
-          ) : filtered.length === 0 ? (
-            <div className="flex items-center justify-center flex-1 text-sm text-[#8094A7] font-inter">
-              {search ? "No deliveries match your search" : "No deliveries yet"}
-            </div>
-          ) : (
-            <div className="flex-1 overflow-auto">
-              <table className="w-full text-[10px] font-manrope">
-                <thead>
-                  <tr className="bg-[#DCE8D6] rounded-lg">
-                    <th className="text-left text-[#333333] font-medium py-3 px-2">
-                      <div className="flex items-center gap-1">Tracking <ArrowDown size={10} color="#333333" /></div>
-                    </th>
-                    <th className="text-left text-[#333333] font-medium py-3 px-2">Customer</th>
-                    <th className="text-left text-[#333333] font-medium py-3 px-2">Courier</th>
-                    <th className="text-left text-[#333333] font-medium py-3 px-2">Pickup</th>
-                    <th className="text-left text-[#333333] font-medium py-3 px-2">Dropoff</th>
-                    <th className="text-left text-[#333333] font-medium py-3 px-2">Status</th>
-                    <th className="text-left text-[#333333] font-medium py-3 px-2">Date</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {filtered.map((d) => (
-                    <tr
-                      key={d.id}
-                      onClick={() => router.push(`/admin/deliveries?id=${d.id}`)}
-                      className="border-b border-[#E0E0E0] last:border-0 cursor-pointer hover:bg-[#F4F8F2] transition-colors"
-                    >
-                      <td className="text-[#173420] py-3 px-2 font-semibold">{d.trackingNumber}</td>
-                      <td className="text-[#333333] py-3 px-2">{d.customerName || d.customerId?.slice(0, 8) || "—"}</td>
-                      <td className="text-[#333333] py-3 px-2">
-                        {d.courierName ? (
-                          <span className="text-[#173420]">{d.courierName}</span>
-                        ) : (
-                          <span className="text-[#F04A4A]">Unassigned</span>
-                        )}
-                      </td>
-                      <td className="text-[#333333] py-3 px-2 max-w-[160px] truncate">{d.pickupAddress || "—"}</td>
-                      <td className="text-[#333333] py-3 px-2 max-w-[160px] truncate">{d.dropoffAddress || "—"}</td>
-                      <td className="py-3 px-2">
-                        <StatusBadge label={statusLabels[d.status] || d.status} status={statusVariants[d.status] || "pending"} />
-                      </td>
-                      <td className="text-[#757575] py-3 px-2 whitespace-nowrap">{new Date(d.createdAt).toLocaleDateString()}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          )}
-        </div>
+      {/* Shipment list */}
+      <div className="px-4 sm:px-5 pb-4">
+        <ShipmentList
+          items={items}
+          statusCounts={meta?.statusCounts ?? {}}
+          loading={loading}
+          error={error}
+          search={search}
+          onSearchChange={setSearch}
+          onSelect={(id) => router.push(`/admin/deliveries?id=${id}`)}
+        />
+      </div>
+
+      {/* Statistics */}
+      <div className="px-4 sm:px-5 pb-8 grid grid-cols-1 lg:grid-cols-2 gap-[10px]">
+        {loading ? (
+          <>
+            <div className="bg-white border border-[#E3E6ED] rounded-lg p-5 animate-pulse min-h-[260px]" />
+            <div className="bg-white border border-[#E3E6ED] rounded-lg p-5 animate-pulse min-h-[260px]" />
+          </>
+        ) : (
+          <>
+            <AvgDeliveryTimeChart data={meta?.deliveriesByMonth ?? []} />
+            <BusyPeriodsHeatmap
+              rows={meta?.busyPeriods?.rows ?? []}
+              labels={meta?.busyPeriods?.labels}
+              max={meta?.busyPeriods?.max ?? 0}
+            />
+          </>
+        )}
       </div>
     </div>
   );

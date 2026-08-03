@@ -22,7 +22,7 @@ export function PaginationBar({
   onShowAll,
 }: PaginationBarProps) {
   return (
-    <div className="flex items-center justify-between px-5 py-4 border-t border-[#EDEDED] mt-auto">
+    <div className="flex flex-col-reverse sm:flex-row items-center justify-between gap-y-4 gap-x-2 px-4 sm:px-5 py-4 border-t border-[#EDEDED] mt-auto">
       <div className="flex items-center gap-2">
         <button
           onClick={onPrev}
@@ -40,7 +40,7 @@ export function PaginationBar({
           <CaretRight size={14} className="text-[#173420]" />
         </button>
       </div>
-      <div className="flex items-center gap-4">
+      <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
         <span className="text-sm font-inter text-[#8094A7]">
           Showing {startEntry} to {endEntry} of {totalEntries} entries
         </span>

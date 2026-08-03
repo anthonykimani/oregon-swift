@@ -65,7 +65,7 @@ export function Sidebar({ open, onToggle }: SidebarProps) {
   return (
     <aside
       className={cn(
-        "flex-shrink-0 flex flex-col bg-white border-r border-[#DFE1E7] transition-all duration-300 overflow-hidden",
+        "fixed lg:static z-50 inset-y-0 left-0 flex flex-col bg-white border-r border-[#DFE1E7] transition-all duration-300 overflow-hidden",
         open ? "w-[272px]" : "w-0 lg:w-[272px]"
       )}
     >
