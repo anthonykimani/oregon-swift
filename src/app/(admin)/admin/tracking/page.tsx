@@ -5,10 +5,11 @@ import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { Scan, Plus } from "@phosphor-icons/react";
 import { Button } from "@/components/ui/button";
-import { TrackingList, type TrackingShipment } from "@/components/admin/tracking-list";
-import { TrackingMap } from "@/components/admin/tracking-map";
-import { LiveTrackingPanel } from "@/components/admin/live-tracking-panel";
-import { VehicleInfoPanel } from "@/components/admin/vehicle-info-panel";
+import { TrackingList } from "@/components/admin/tracking-list";
+import { TrackingMap } from "@/components/shared/tracking/tracking-map";
+import { LiveTrackingPanel } from "@/components/shared/tracking/live-tracking-panel";
+import { VehicleInfoPanel } from "@/components/shared/tracking/vehicle-info-panel";
+import type { TrackingShipment } from "@/components/shared/tracking/types";
 import { api } from "@/lib/api";
 
 interface DeliveriesPayload {

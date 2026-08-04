@@ -11,7 +11,10 @@ import { TrackingEvent } from "../models/tracking-event.entity";
 import { ProofOfDelivery } from "../models/proof-of-delivery.entity";
 import { Invoice } from "../models/invoice.entity";
 import { InvoiceItem } from "../models/invoice-item.entity";
+import { PaymentEvent } from "../models/payment-event.entity";
 import { Notification } from "../models/notification.entity";
+import { Conversation } from "../models/conversation.entity";
+import { Message } from "../models/message.entity";
 
 dotenv.config({ path: `.env.${process.env.NODE_ENV}` });
 
@@ -48,7 +51,10 @@ const AppDataSource = new DataSource({
     ProofOfDelivery,
     Invoice,
     InvoiceItem,
+    PaymentEvent,
     Notification,
+    Conversation,
+    Message,
   ],
   synchronize: true,
   dropSchema: false,

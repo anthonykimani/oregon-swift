@@ -29,6 +29,11 @@ export interface Delivery {
   createdAt: string;
   updatedAt: string;
   trackingEvents?: TrackingEvent[];
+  courierName?: string | null;
+  courierPhone?: string | null;
+  courierVehicle?: string | null;
+  customerName?: string | null;
+  latestEvent?: TrackingEvent | null;
 }
 
 export interface TrackingEvent {
@@ -45,10 +50,50 @@ export interface Invoice {
   id: string;
   customerId: string;
   number: string;
-  periodStart: string;
-  periodEnd: string;
+  periodStart: string | null;
+  periodEnd: string | null;
   status: string;
+  subtotalCents?: number;
+  taxCents?: number;
   totalCents: number;
-  issuedAt: string;
+  dueDate?: string | null;
+  issuedAt: string | null;
   paidAt: string | null;
+  paymentRequestedAt?: string | null;
+  confirmedBy?: string | null;
+  disputedBy?: string | null;
+  disputeReason?: string | null;
+  adminNote?: string | null;
+  billTo?: { name: string; email: string } | null;
+  items?: InvoiceLineItem[];
+  customerName?: string | null;
+  itemCount?: number;
+  courierCount?: number;
+  courierNames?: string[];
+  myDeliveries?: number;
+  overdue?: boolean;
+  paymentEvents?: PaymentEvent[];
+}
+
+export interface PaymentEvent {
+  id: string;
+  invoiceId: string;
+  action: string;
+  actorId?: string | null;
+  actorRole?: string | null;
+  note?: string | null;
+  createdAt: string;
+  actorName?: string | null;
+}
+
+export interface InvoiceLineItem {
+  id: string;
+  deliveryId: string;
+  amountCents: number;
+  trackingNumber: string | null;
+  packageDesc: string | null;
+  packagePieces: number;
+  shipmentType: string | null;
+  origin: string | null;
+  destination: string | null;
 }

@@ -12,6 +12,8 @@ import {
   Bank,
   Warehouse,
   ChartBar,
+  Receipt,
+  ChatsCircle,
   Gear,
   Headphones,
   SignOut,
@@ -19,6 +21,8 @@ import {
   CaretRight,
 } from "@phosphor-icons/react";
 import { cn } from "@/lib/utils";
+import { useSession } from "next-auth/react";
+import { useUnreadCount } from "@/lib/messaging/use-unread-count";
 
 const navSections = [
   {
@@ -28,6 +32,7 @@ const navSections = [
       { name: "Deliveries", icon: Package, path: "/admin/deliveries" },
       { name: "Tracking", icon: Scan, path: "/admin/tracking" },
       { name: "Applications", icon: ClipboardText, path: "/admin/applications" },
+      { name: "Messages", icon: ChatsCircle, path: "/admin/messages" },
     ],
   },
   {
@@ -35,6 +40,7 @@ const navSections = [
     items: [
       { name: "Carriers", icon: Truck, path: "/admin/carriers" },
       { name: "Customers", icon: UserCircle, path: "/admin/customers" },
+      { name: "Invoices", icon: Receipt, path: "/admin/invoices" },
       { name: "Companies", icon: Bank, path: "/admin/companies" },
       { name: "Warehouses", icon: Warehouse, path: "/admin/warehouses" },
       { name: "Reports", icon: ChartBar, path: "/admin/reports" },
@@ -55,6 +61,8 @@ interface SidebarProps {
 
 export function Sidebar({ open, onToggle }: SidebarProps) {
   const pathname = usePathname();
+  const { data: session } = useSession();
+  const { unreadCount } = useUnreadCount(session?.accessToken);
 
   const isActive = (path: string) => {
     if (path === "/admin" && pathname === "/admin") return true;
@@ -119,6 +127,11 @@ export function Sidebar({ open, onToggle }: SidebarProps) {
                         weight={active ? "fill" : "regular"}
                       />
                       <span className="flex-1">{item.name}</span>
+                      {item.name === "Messages" && unreadCount > 0 && (
+                        <span className="h-[18px] min-w-[18px] px-1 flex items-center justify-center rounded-full bg-[#C0392B] text-white text-[10px] font-manrope font-bold">
+                          {unreadCount > 99 ? "99+" : unreadCount}
+                        </span>
+                      )}
                       <CaretRight size={12} className="text-inherit opacity-50" />
                     </Link>
                   </li>

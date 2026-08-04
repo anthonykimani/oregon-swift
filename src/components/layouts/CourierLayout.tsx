@@ -8,6 +8,8 @@ import {
   House,
   Truck,
   Wallet,
+  Receipt,
+  ChatsCircle,
   SignOut,
   CaretLeft,
   CaretRight,
@@ -15,24 +17,30 @@ import {
 } from "@phosphor-icons/react";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
+import { useUnreadCount } from "@/lib/messaging/use-unread-count";
 
 const navItems = [
   { name: "Dashboard", icon: House, path: "/courier" },
   { name: "My Deliveries", icon: Truck, path: "/courier/deliveries" },
+  { name: "Invoices", icon: Receipt, path: "/courier/invoices" },
   { name: "Earnings", icon: Wallet, path: "/courier/earnings" },
+  { name: "Messages", icon: ChatsCircle, path: "/courier/messages" },
 ];
 
 const pageTitles: Record<string, string> = {
   "/courier": "Dashboard",
   "/courier/": "Dashboard",
   "/courier/deliveries": "My Deliveries",
+  "/courier/invoices": "Invoices",
   "/courier/earnings": "Earnings",
+  "/courier/messages": "Messages",
   "/courier/account": "Account",
 };
 
 export function CourierLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const { data: session } = useSession();
+  const { unreadCount } = useUnreadCount(session?.accessToken);
   const [sidebarOpen, setSidebarOpen] = useState(true);
 
   useEffect(() => {
@@ -100,6 +108,11 @@ export function CourierLayout({ children }: { children: React.ReactNode }) {
                 )}
                 <Icon size={20} weight={active ? "fill" : "regular"} />
                 <span className="flex-1">{item.name}</span>
+                {item.name === "Messages" && unreadCount > 0 && (
+                  <span className="h-[18px] min-w-[18px] px-1 flex items-center justify-center rounded-full bg-[#C0392B] text-white text-[10px] font-manrope font-bold">
+                    {unreadCount > 99 ? "99+" : unreadCount}
+                  </span>
+                )}
                 <CaretRight size={12} className="text-inherit opacity-50" />
               </Link>
             );

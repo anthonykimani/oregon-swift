@@ -4,30 +4,8 @@ import { useEffect, useState } from "react";
 import { Truck } from "@phosphor-icons/react";
 import { StatusBadge } from "@/components/ui/status-badge";
 import { geocodeAddress, formatDistance, formatDurationHours, haversineMiles } from "@/lib/geocode";
-import type { TrackingShipment } from "@/components/admin/tracking-list";
-import { progressForStatus } from "@/components/admin/tracking-list";
-
-const statusLabels: Record<string, string> = {
-  pending: "Pending",
-  processing: "Processing",
-  "picked-up": "Picked Up",
-  "in-transit": "In Transit",
-  "out-for-delivery": "Out for Delivery",
-  delivered: "Delivered",
-  cancelled: "Cancelled",
-  "failed-attempt": "Failed Attempt",
-};
-
-const statusVariants: Record<string, "pending" | "processing" | "in-transit" | "out-for-delivery" | "delivered" | "cancelled"> = {
-  pending: "pending",
-  processing: "processing",
-  "picked-up": "in-transit",
-  "in-transit": "in-transit",
-  "out-for-delivery": "out-for-delivery",
-  delivered: "delivered",
-  "failed-attempt": "pending",
-  cancelled: "cancelled",
-};
+import { progressForStatus, statusLabels, statusVariants } from "@/components/shared/tracking/types";
+import type { TrackingShipment } from "@/components/shared/tracking/types";
 
 function formatShortDate(d: string | null) {
   if (!d) return "—";
@@ -81,7 +59,13 @@ function Step({ label, name, time, dot }: { label: string; name: string; time: s
   );
 }
 
-export function LiveTrackingPanel({ shipment }: { shipment: TrackingShipment | null }) {
+export function LiveTrackingPanel({
+  shipment,
+  showHeader = true,
+}: {
+  shipment: TrackingShipment | null;
+  showHeader?: boolean;
+}) {
   const [distance, setDistance] = useState<number | null>(null);
 
   useEffect(() => {
@@ -128,21 +112,23 @@ export function LiveTrackingPanel({ shipment }: { shipment: TrackingShipment | n
   return (
     <section className="bg-white border border-[#E3E6ED] rounded-lg p-5 flex flex-col min-w-0">
       {/* Header */}
-      <div className="flex items-center justify-between gap-3 mb-4">
-        <div className="min-w-0">
-          <div className="text-[10px] font-manrope text-[#8094A7]">Tracking ID</div>
-          <div className="text-sm font-manrope font-semibold text-[#052D50] truncate">
-            #{shipment.trackingNumber}
+      {showHeader && (
+        <div className="flex items-center justify-between gap-3 mb-4">
+          <div className="min-w-0">
+            <div className="text-[10px] font-manrope text-[#8094A7]">Tracking ID</div>
+            <div className="text-sm font-manrope font-semibold text-[#052D50] truncate">
+              #{shipment.trackingNumber}
+            </div>
+          </div>
+          <div className="flex flex-col items-end gap-1">
+            <StatusBadge label={statusLabels[shipment.status] || shipment.status} status={statusVariants[shipment.status] || "pending"} />
+            <span className="text-[10px] font-manrope text-[#8094A7]">
+              {shipment.courierName ? `${shipment.courierName} · ` : ""}
+              {shipment.priceCents != null ? `$${(shipment.priceCents / 100).toFixed(2)}` : ""}
+            </span>
           </div>
         </div>
-        <div className="flex flex-col items-end gap-1">
-          <StatusBadge label={statusLabels[shipment.status] || shipment.status} status={statusVariants[shipment.status] || "pending"} />
-          <span className="text-[10px] font-manrope text-[#8094A7]">
-            {shipment.courierName ? `${shipment.courierName} · ` : ""}
-            {shipment.priceCents != null ? `$${(shipment.priceCents / 100).toFixed(2)}` : ""}
-          </span>
-        </div>
-      </div>
+      )}
 
       {/* Donut + stepper */}
       <div className="flex items-center gap-5 mb-5">

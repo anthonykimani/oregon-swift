@@ -18,6 +18,9 @@ router.post("/deliveries/estimate", authMiddleware, DeliveryController.estimate)
 router.get("/deliveries", authMiddleware, DeliveryController.list);
 router.get("/deliveries/:id", authMiddleware, DeliveryController.getById);
 router.get("/invoices", authMiddleware, InvoiceController.list);
+router.post("/invoices/generate", authMiddleware, InvoiceController.generate);
+router.post("/invoices/:id/pay", authMiddleware, InvoiceController.pay);
+router.post("/invoices/:id/send", authMiddleware, InvoiceController.send);
 router.get("/invoices/:id", authMiddleware, InvoiceController.getById);
 router.get("/invoices/:id/pdf", authMiddleware, InvoiceController.generatePdf);
 

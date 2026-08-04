@@ -10,11 +10,15 @@ import authRoutes from "./routes/index.auth";
 import adminRoutes from "./routes/index.admin";
 import customerRoutes from "./routes/index.customer";
 import courierRoutes from "./routes/index.courier";
+import messageRoutes from "./routes/index.message";
+
+import SocketService from "./utils/socket/app.socket.manager";
 
 dotenv.config({ path: `.env.${process.env.NODE_ENV}` });
 
 export const app = express();
 export const server = http.createServer(app);
+export const io = SocketService.getInstance().initialize(server);
 
 app.disable("x-powered-by");
 app.enable("trust proxy");
@@ -25,6 +29,7 @@ app.use("/api/v1/auth", authRoutes);
 app.use("/api/v1/admin", adminRoutes);
 app.use("/api/v1", customerRoutes);
 app.use("/api/v1", courierRoutes);
+app.use("/api/v1", messageRoutes);
 
 app.get("/health", (_req, res) => {
   res.status(200).json({

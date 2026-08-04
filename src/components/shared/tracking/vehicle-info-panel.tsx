@@ -1,6 +1,7 @@
 "use client";
 
-import { Phone, ChatTeardrop, Truck, UserCircle } from "@phosphor-icons/react";import type { TrackingShipment } from "@/components/admin/tracking-list";
+import { Phone, ChatTeardrop, Truck, UserCircle } from "@phosphor-icons/react";
+import type { TrackingShipment } from "@/components/shared/tracking/types";
 
 export function VehicleInfoPanel({ shipment }: { shipment: TrackingShipment | null }) {
   if (!shipment) {

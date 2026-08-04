@@ -6,30 +6,9 @@ import type { Map as LeafletMap, CircleMarker, Polyline } from "leaflet";
 import { ArrowsOutSimple, Plus, Minus } from "@phosphor-icons/react";
 import { geocodeAddress } from "@/lib/geocode";
 import { StatusBadge } from "@/components/ui/status-badge";
+import { statusLabels, statusVariants } from "@/components/shared/tracking/types";
 
 const DEFAULT_VIEW: [number, number] = [45.52, -122.68];
-
-const statusLabels: Record<string, string> = {
-  pending: "Pending",
-  processing: "Processing",
-  "picked-up": "Picked Up",
-  "in-transit": "In Transit",
-  "out-for-delivery": "Out for Delivery",
-  delivered: "Delivered",
-  cancelled: "Cancelled",
-  "failed-attempt": "Failed Attempt",
-};
-
-const statusVariants: Record<string, "pending" | "processing" | "in-transit" | "out-for-delivery" | "delivered" | "cancelled"> = {
-  pending: "pending",
-  processing: "processing",
-  "picked-up": "in-transit",
-  "in-transit": "in-transit",
-  "out-for-delivery": "out-for-delivery",
-  delivered: "delivered",
-  "failed-attempt": "pending",
-  cancelled: "cancelled",
-};
 
 export function TrackingMap({
   trackingNumber,

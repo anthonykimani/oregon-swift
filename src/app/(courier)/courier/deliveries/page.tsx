@@ -1,375 +1,488 @@
 "use client";
 
-import { Suspense, useState, useEffect } from "react";
+import { Suspense, useState, useEffect, useCallback, useMemo } from "react";
 import { useSession } from "next-auth/react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { MapPin, Clock, Truck, Cube, Phone, ArrowRight, Funnel, MagnifyingGlass, CaretLeft, CheckCircle, Package, XCircle } from "@phosphor-icons/react";
-import { StatusBadge } from "@/components/ui/status-badge";
-import { Input } from "@/components/ui/input";
+import {
+  Package,
+  CaretLeft,
+  CaretRight,
+  CaretDown,
+  DotsThree,
+  MagnifyingGlass,
+  Funnel,
+  CalendarBlank,
+  ArrowsDownUp,
+  ArrowClockwise,
+} from "@phosphor-icons/react";
 import { api } from "@/lib/api";
+import type { Delivery } from "@/types/delivery";
+import { CourierDeliverySheet } from "@/components/courier/courier-delivery-sheet";
+import {
+  statusLabels,
+  statusPillStyles,
+  progressByStatus,
+} from "@/components/shared/tracking/types";
 
-interface DeliveryItem {
-  id: string;
-  trackingNumber: string;
-  status: string;
-  pickupAddress: string;
-  pickupContactName: string;
-  pickupContactPhone: string;
-  dropoffAddress: string;
-  dropoffContactName: string;
-  dropoffContactPhone: string;
-  packageDesc: string;
-  packagePieces: number;
-  packageWeight: string;
-  createdAt: string;
-}
+const PAGE_SIZE = 12;
 
-interface DeliveryDetail {
-  id: string;
-  trackingNumber: string;
-  status: string;
-  pickupAddress: string;
-  pickupContactName: string;
-  pickupContactPhone: string;
-  dropoffAddress: string;
-  dropoffContactName: string;
-  dropoffContactPhone: string;
-  packageDesc: string;
-  packagePieces: number;
-  packageWeight: string;
-  packageFragile: boolean;
-  createdAt: string;
-}
+type TabKey = "all" | "pending" | "in-transit" | "delivered";
 
-const statusLabels: Record<string, string> = {
-  pending: "Pending",
-  "picked-up": "Picked Up",
-  "in-transit": "In Transit",
-  "out-for-delivery": "Out for Delivery",
-  delivered: "Delivered",
-  "failed-attempt": "Failed Attempt",
-  cancelled: "Cancelled",
+const TAB_GROUPS: Record<TabKey, string[]> = {
+  all: [],
+  pending: ["pending", "picked-up"],
+  "in-transit": ["in-transit", "out-for-delivery", "failed-attempt"],
+  delivered: ["delivered"],
 };
 
-const statusVariants: Record<string, "pending" | "processing" | "in-transit" | "out-for-delivery" | "delivered" | "cancelled"> = {
-  pending: "pending",
-  "picked-up": "in-transit",
-  "in-transit": "in-transit",
-  "out-for-delivery": "out-for-delivery",
-  delivered: "delivered",
-  "failed-attempt": "pending",
-  cancelled: "cancelled",
-};
-
-const statusActions: { status: string; label: string; icon: React.ElementType; color: string }[] = [
-  { status: "picked-up", label: "Picked Up", icon: Package, color: "#173420" },
-  { status: "in-transit", label: "In Transit", icon: Truck, color: "#3D724D" },
-  { status: "out-for-delivery", label: "Out for Delivery", icon: Truck, color: "#F3BC24" },
-  { status: "delivered", label: "Delivered", icon: CheckCircle, color: "#007837" },
-  { status: "failed-attempt", label: "Failed Attempt", icon: XCircle, color: "#F04A4A" },
+const TABS: { key: TabKey; label: string }[] = [
+  { key: "all", label: "All" },
+  { key: "pending", label: "Pending" },
+  { key: "in-transit", label: "In Transit" },
+  { key: "delivered", label: "Delivered" },
 ];
 
-const statusFilters = ["All", "Active", "Pending", "Picked Up", "In Transit", "Out for Delivery", "Delivered", "Failed Attempt", "Cancelled"];
-const activeStatuses = ["pending", "picked-up", "in-transit", "out-for-delivery", "failed-attempt"];
+const HEADERS = ["Shipping ID", "Route", "Customer", "Date", "Progress", "Status", "Earn"];
 
-function JobDetailView({ id, token, onBack }: { id: string; token: string; onBack: () => void }) {
-  const [job, setJob] = useState<DeliveryDetail | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [updating, setUpdating] = useState(false);
-  const [error, setError] = useState("");
+function shortAddr(s: string | null | undefined) {
+  if (!s) return "—";
+  return s.split(",")[0].trim() || s;
+}
 
-  useEffect(() => {
-    if (!token) return;
-    api<DeliveryDetail>(`/courier/deliveries/${id}`, { token }).then((res) => {
-      if (res.status === 200 && res.data) setJob(res.data);
-      else setError("Job not found");
-    }).catch(() => setError("Failed to load")).finally(() => setLoading(false));
-  }, [token, id]);
+function formatDate(ts: string | null | undefined) {
+  if (!ts) return "";
+  const d = new Date(ts);
+  if (isNaN(d.getTime())) return "";
+  return d.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
+}
 
-  async function handleStatusUpdate(status: string) {
-    if (!token) return;
-    setUpdating(true);
-    setError("");
-    const res = await api(`/courier/deliveries/${id}/status`, {
-      method: "PATCH",
-      token,
-      body: JSON.stringify({ status }),
-    });
-    setUpdating(false);
-    if (res.status === 200 && res.data) {
-      setJob(res.data.delivery);
-    } else {
-      setError(res.errors?.[0] || "Failed to update status");
-    }
-  }
+function formatCents(cents: number | null | undefined) {
+  if (cents == null) return "—";
+  return `$${(cents / 100).toLocaleString("en-US", { minimumFractionDigits: 2 })}`;
+}
 
-  if (loading) {
-    return (
-      <div className="h-full flex items-center justify-center">
-        <div className="animate-pulse text-sm text-[#8094A7]">Loading job details...</div>
-      </div>
-    );
-  }
-
-  if (error && !job) {
-    return (
-      <div className="h-full flex items-center justify-center">
-        <div className="text-center">
-          <p className="text-sm text-[#C0392B] mb-3">{error}</p>
-          <button onClick={onBack} className="text-sm text-[#173420] hover:underline">Back to jobs</button>
-        </div>
-      </div>
-    );
-  }
-
-  if (!job) return null;
-
-  const isComplete = ["delivered", "cancelled", "failed-attempt"].includes(job.status);
-
-  return (
-    <div className="h-full flex flex-col">
-      <div className="px-4 sm:px-6 pt-6 pb-4">
-        <button onClick={onBack} className="flex items-center gap-1 text-sm text-[#173420] mb-3 font-inter">
-          <CaretLeft size={16} /> Back
-        </button>
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-lg font-clash-display font-semibold text-[#173420]">{job.trackingNumber}</h1>
-            <div className="mt-1">
-              <StatusBadge label={statusLabels[job.status] || job.status} status={statusVariants[job.status] || "pending"} />
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <div className="px-4 sm:px-6 flex-1 overflow-y-auto pb-20 space-y-4">
-        <div className="bg-white border border-[#E3E6ED] rounded-xl p-4 shadow-sm">
-          <h3 className="flex items-center gap-2 text-sm font-semibold text-[#173420] mb-3">
-            <MapPin size={16} className="text-[#3D724D]" /> Pickup Location
-          </h3>
-          <p className="text-sm text-[#333333]">{job.pickupAddress || "—"}</p>
-          {(job.pickupContactName || job.pickupContactPhone) && (
-            <div className="flex items-center gap-2 mt-2 text-xs text-[#666D80]">
-              <Phone size={12} />
-              <span>{job.pickupContactName}{job.pickupContactPhone ? ` — ${job.pickupContactPhone}` : ""}</span>
-            </div>
-          )}
-        </div>
-
-        <div className="bg-white border border-[#E3E6ED] rounded-xl p-4 shadow-sm">
-          <h3 className="flex items-center gap-2 text-sm font-semibold text-[#173420] mb-3">
-            <MapPin size={16} className="text-[#F04A4A]" /> Dropoff Location
-          </h3>
-          <p className="text-sm text-[#333333]">{job.dropoffAddress || "—"}</p>
-          {(job.dropoffContactName || job.dropoffContactPhone) && (
-            <div className="flex items-center gap-2 mt-2 text-xs text-[#666D80]">
-              <Phone size={12} />
-              <span>{job.dropoffContactName}{job.dropoffContactPhone ? ` — ${job.dropoffContactPhone}` : ""}</span>
-            </div>
-          )}
-        </div>
-
-        <div className="bg-white border border-[#E3E6ED] rounded-xl p-4 shadow-sm">
-          <h3 className="flex items-center gap-2 text-sm font-semibold text-[#173420] mb-3">
-            <Cube size={16} className="text-[#3D724D]" /> Package Details
-          </h3>
-          <p className="text-sm text-[#333333]">{job.packageDesc || "—"}</p>
-          <p className="text-xs text-[#8094A7] mt-1">
-            {job.packagePieces} piece{job.packagePieces > 1 ? "s" : ""}
-            {job.packageWeight ? ` · ${job.packageWeight} lbs` : ""}
-            {job.packageFragile ? " · Fragile" : ""}
-          </p>
-        </div>
-
-        {error && (
-          <div className="bg-[#FCDEE0] text-[#C0392B] text-sm rounded-lg px-4 py-3">{error}</div>
-        )}
-
-        {!isComplete && (
-          <div className="bg-white border border-[#E3E6ED] rounded-xl p-4 shadow-sm">
-            <h3 className="text-sm font-semibold text-[#173420] mb-3">Update Status</h3>
-            <div className="grid grid-cols-2 gap-2">
-              {statusActions.map((action) => {
-                const Icon = action.icon;
-                const disabled = updating || job.status === action.status;
-                return (
-                  <button
-                    key={action.status}
-                    onClick={() => handleStatusUpdate(action.status)}
-                    disabled={disabled}
-                    className="flex items-center gap-2 px-3 py-3 rounded-lg text-xs font-semibold border transition-all disabled:opacity-40 disabled:cursor-not-allowed"
-                    style={{
-                      color: action.color,
-                      borderColor: disabled ? "#E3E6ED" : action.color,
-                      backgroundColor: disabled ? "#F9F9F9" : `${action.color}08`,
-                    }}
-                  >
-                    <Icon size={16} weight="bold" />
-                    {updating ? "Updating..." : action.label}
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-        )}
-      </div>
-    </div>
-  );
+function pageItems(current: number, total: number): (number | "...")[] {
+  if (total <= 7) return Array.from({ length: total }, (_, i) => i + 1);
+  const items: (number | "...")[] = [1];
+  const start = Math.max(2, current - 1);
+  const end = Math.min(total - 1, current + 1);
+  if (start > 2) items.push("...");
+  for (let i = start; i <= end; i++) items.push(i);
+  if (end < total - 1) items.push("...");
+  items.push(total);
+  return items;
 }
 
 function CourierDeliveriesContent() {
-  const { data: session } = useSession();
+  const { data: session, status } = useSession();
   const router = useRouter();
   const searchParams = useSearchParams();
   const detailId = searchParams.get("id");
 
   const token = session?.accessToken;
-  const [deliveries, setDeliveries] = useState<DeliveryItem[]>([]);
+  const courierName =
+    session?.user?.firstname && session?.user?.lastname
+      ? `${session.user.firstname} ${session.user.lastname}`
+      : session?.user?.name || null;
+  const [deliveries, setDeliveries] = useState<Delivery[]>([]);
   const [loading, setLoading] = useState(true);
-  const [statusFilter, setStatusFilter] = useState("All");
-  const [search, setSearch] = useState("");
+  const [activeTab, setActiveTab] = useState<TabKey>("all");
+  const [searchQuery, setSearchQuery] = useState("");
+  const [sortBy, setSortBy] = useState<"newest" | "oldest">("newest");
+  const [sortMenuOpen, setSortMenuOpen] = useState(false);
+  const [page, setPage] = useState(1);
+  const filterKey = `${activeTab}|${searchQuery}|${sortBy}`;
+  const [prevFilterKey, setPrevFilterKey] = useState(filterKey);
 
-  useEffect(() => {
-    if (!token) return;
-    api<DeliveryItem[]>("/courier/deliveries", { token }).then((res) => {
-      if (res.status === 200 && res.data) setDeliveries(res.data);
-    }).finally(() => setLoading(false));
-  }, [token]);
-
-  if (detailId && token) {
-    return <JobDetailView id={detailId} token={token} onBack={() => router.push("/courier/deliveries")} />;
+  if (filterKey !== prevFilterKey) {
+    setPrevFilterKey(filterKey);
+    setPage(1);
   }
 
-  const filtered = deliveries.filter((d) => {
-    if (statusFilter === "Active") {
-      if (!activeStatuses.includes(d.status)) return false;
-    } else if (statusFilter !== "All") {
-      const filterKey = statusFilter.toLowerCase().replace(/\s+/g, "-");
-      if (d.status !== filterKey) return false;
+  useEffect(() => {
+    if (status === "unauthenticated") {
+      router.push("/sign-in");
     }
-    if (search) {
-      const q = search.toLowerCase();
-      if (!d.trackingNumber.toLowerCase().includes(q) &&
-          !d.pickupAddress?.toLowerCase().includes(q) &&
-          !d.dropoffAddress?.toLowerCase().includes(q)) return false;
+  }, [status, router]);
+
+  const load = useCallback(() => {
+    if (!token) return;
+    let cancelled = false;
+    api<Delivery[]>("/courier/deliveries", { token }).then((res) => {
+      if (cancelled) return;
+      if (res.status === 200 && res.data) setDeliveries(res.data);
+      setLoading(false);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [token]);
+
+  useEffect(() => {
+    load();
+  }, [load]);
+
+  const closeSheet = useCallback(() => {
+    router.replace("/courier/deliveries");
+  }, [router]);
+
+  const openDelivery = useCallback(
+    (d: Delivery) => {
+      router.push(`/courier/deliveries?id=${d.id}`);
+    },
+    [router]
+  );
+
+  const counts = useMemo(() => {
+    const c: Record<TabKey, number> = { all: deliveries.length, pending: 0, "in-transit": 0, delivered: 0 };
+    for (const d of deliveries) {
+      if (TAB_GROUPS.pending.includes(d.status)) c.pending++;
+      if (TAB_GROUPS["in-transit"].includes(d.status)) c["in-transit"]++;
+      if (TAB_GROUPS.delivered.includes(d.status)) c.delivered++;
     }
-    return true;
-  });
+    return c;
+  }, [deliveries]);
+
+  const filtered = useMemo(() => {
+    let list = deliveries;
+    const group = TAB_GROUPS[activeTab];
+    if (group.length) list = list.filter((d) => group.includes(d.status));
+    if (searchQuery.trim()) {
+      const q = searchQuery.trim().toLowerCase();
+      list = list.filter((d) =>
+        [d.trackingNumber, d.packageDesc, d.pickupAddress, d.dropoffAddress, d.customerName ?? ""]
+          .some((v) => (v ?? "").toLowerCase().includes(q))
+      );
+    }
+    list = [...list].sort((a, b) =>
+      sortBy === "oldest"
+        ? new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
+        : new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+    );
+    return list;
+  }, [deliveries, activeTab, searchQuery, sortBy]);
+
+  const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
+  const currentPage = Math.min(page, totalPages);
+  const pageRows = filtered.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE);
 
   return (
-    <div className="h-full flex flex-col">
-      <div className="px-4 sm:px-6 pt-8 pb-4">
-        <h1 className="text-xl font-clash-display font-semibold text-[#173420]">My Deliveries</h1>
-        <p className="text-sm text-[#666D80] font-inter mt-1">All deliveries assigned to you</p>
-      </div>
-
-      <div className="px-4 sm:px-6 pb-4 space-y-3">
-        <div className="relative">
-          <MagnifyingGlass size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-[#8094A7]" />
-          <Input
-            placeholder="Search by tracking number or address..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="pl-9 h-9 bg-white border-[#E3E6ED] rounded-lg text-sm text-[#333333] placeholder:text-[#8094A7]"
-          />
+    <>
+      <div className="h-full flex flex-col bg-[#F5F4FD] overflow-y-auto">
+        <div className="px-4 sm:px-6 pt-8 pb-4">
+          <h1 className="text-xl font-clash-display font-semibold text-[#173420]">My Deliveries</h1>
         </div>
 
-        <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-none">
-          <Funnel size={14} className="text-[#8094A7] shrink-0" />
-          {statusFilters.map((f) => (
-            <button
-              key={f}
-              onClick={() => setStatusFilter(f)}
-              className={`shrink-0 h-7 px-3 rounded-full text-xs font-medium font-inter transition-colors whitespace-nowrap ${
-                statusFilter === f
-                  ? "bg-[#173420] text-white"
-                  : "bg-white text-[#666D80] border border-[#E3E6ED] hover:border-[#173420]"
-              }`}
-            >
-              {f}
-            </button>
-          ))}
+        <div className="px-4 sm:px-6 pb-20">
+          {loading ? (
+            <div className="bg-[#FEFEFE] border border-[#E3E6ED] rounded-[12px] p-4">
+              <div className="h-10 bg-[#F0F0F0] rounded-lg animate-pulse mb-4" />
+              {[...Array(6)].map((_, i) => (
+                <div key={i} className="flex items-center gap-6 border-b border-[#F0F0F0] py-4 animate-pulse">
+                  <div className="h-3 w-24 bg-[#E3E6ED] rounded" />
+                  <div className="h-3 w-40 bg-[#E3E6ED] rounded" />
+                  <div className="h-3 w-20 bg-[#E3E6ED] rounded" />
+                  <div className="h-3 w-28 bg-[#E3E6ED] rounded" />
+                  <div className="h-1.5 w-16 bg-[#E3E6ED] rounded-full" />
+                  <div className="h-5 w-20 bg-[#E3E6ED] rounded-full" />
+                </div>
+              ))}
+            </div>
+          ) : deliveries.length === 0 ? (
+            <div className="bg-white rounded-xl border border-[#E3E6ED] p-8 text-center">
+              <Package size={40} className="mx-auto text-[#8094A7]" />
+              <p className="text-sm text-[#8094A7] font-inter mt-4">No deliveries assigned to you yet.</p>
+            </div>
+          ) : (
+            <div className="bg-[#FEFEFE] border border-[#E3E6ED] rounded-[12px] p-4 shadow-sm">
+              {/* Toolbar */}
+              <div className="flex flex-col xl:flex-row xl:items-center justify-between gap-3 mb-4">
+                <div className="flex items-center gap-1 bg-[#F0F0F0] rounded-lg p-1 overflow-x-auto">
+                  {TABS.map((t) => {
+                    const active = activeTab === t.key;
+                    return (
+                      <button
+                        key={t.key}
+                        type="button"
+                        onClick={() => setActiveTab(t.key)}
+                        className={`px-3.5 py-1.5 rounded-md text-xs font-manrope whitespace-nowrap transition-colors ${
+                          active ? "bg-[#173420] text-white" : "text-[#757575] hover:text-[#333333]"
+                        }`}
+                      >
+                        {t.label}{" "}
+                        <span className={active ? "text-[#A8CDB4]" : "text-[#A0A0A0]"}>({counts[t.key]})</span>
+                      </button>
+                    );
+                  })}
+                </div>
+
+                <div className="flex items-center gap-2 flex-wrap">
+                  <div className="relative">
+                    <MagnifyingGlass size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-[#333333]" />
+                    <input
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                      placeholder="Search id, address, customer"
+                      className="h-9 w-full sm:w-[220px] pl-9 pr-3 bg-[#F0F0F0] rounded-lg text-xs font-manrope text-[#333333] placeholder:text-[#757575] focus:outline-none focus:ring-1 focus:ring-[#173420]"
+                    />
+                  </div>
+
+                  <button
+                    type="button"
+                    className="relative h-9 px-3 bg-[#F0F0F0] rounded-lg text-xs font-manrope text-[#333333] flex items-center gap-1.5"
+                    title="Filter"
+                  >
+                    <Funnel size={14} /> Filter
+                  </button>
+
+                  <button
+                    type="button"
+                    className="h-9 px-3 bg-[#F0F0F0] rounded-lg text-xs font-manrope text-[#333333] flex items-center gap-1.5"
+                    title="Date range"
+                  >
+                    <CalendarBlank size={14} /> This Month <CaretDown size={12} />
+                  </button>
+
+                  <div className="flex items-center gap-1.5">
+                    <span className="text-[11px] font-manrope text-[#6E6F78]">Sort by:</span>
+                    <div className="relative">
+                      <button
+                        type="button"
+                        onClick={() => setSortMenuOpen((o) => !o)}
+                        className="h-9 px-2.5 bg-[#F0F0F0] rounded-lg text-xs font-manrope text-[#333333] flex items-center gap-1.5"
+                      >
+                        {sortBy === "newest" ? "Newest" : "Oldest"} <CaretDown size={12} />
+                      </button>
+                      {sortMenuOpen && (
+                        <>
+                          <div className="fixed inset-0 z-10" onClick={() => setSortMenuOpen(false)} />
+                          <div className="absolute right-0 top-10 z-20 bg-white border border-[#E3E6ED] rounded-lg shadow-lg py-1 min-w-[120px]">
+                            {(["newest", "oldest"] as const).map((opt) => (
+                              <button
+                                key={opt}
+                                type="button"
+                                onClick={() => {
+                                  setSortBy(opt);
+                                  setSortMenuOpen(false);
+                                }}
+                                className={`block w-full text-left px-3 py-2 text-xs font-manrope hover:bg-[#F8F8FA] ${
+                                  sortBy === opt ? "text-[#173420] font-semibold" : "text-[#333333]"
+                                }`}
+                              >
+                                {opt === "newest" ? "Newest" : "Oldest"}
+                              </button>
+                            ))}
+                          </div>
+                        </>
+                      )}
+                    </div>
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={load}
+                    className="h-9 px-3 bg-[#F0F0F0] rounded-lg text-xs font-manrope text-[#333333] flex items-center gap-1.5 hover:bg-[#E3E6ED] transition-colors"
+                    title="Refresh"
+                  >
+                    <ArrowClockwise size={14} /> Refresh
+                  </button>
+                </div>
+              </div>
+
+              {/* Table */}
+              <div className="overflow-x-auto">
+                <table className="w-full min-w-[980px]">
+                  <thead>
+                    <tr className="border-b border-[#E0E0E0]">
+                      {HEADERS.map((h) => (
+                        <th
+                          key={h}
+                          className="px-3 py-2.5 text-left text-[11px] font-manrope font-semibold text-[#333333] whitespace-nowrap"
+                        >
+                          <span className="inline-flex items-center gap-1">
+                            {h}
+                            <ArrowsDownUp size={11} className="text-[#B0B0B0]" />
+                          </span>
+                        </th>
+                      ))}
+                      <th className="px-3 py-2.5"></th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {pageRows.length === 0 ? (
+                      <tr>
+                        <td colSpan={8} className="px-3 py-16 text-center">
+                          <Package size={32} className="mx-auto text-[#E3E6ED]" />
+                          <p className="text-sm text-[#8094A7] font-inter mt-3">No results match your filters.</p>
+                        </td>
+                      </tr>
+                    ) : (
+                      pageRows.map((d) => {
+                        const pill = statusPillStyles[d.status] || { bg: "bg-[#F0F0F0]", text: "text-[#999999]" };
+                        const pct = progressByStatus[d.status] ?? 10;
+                        return (
+                          <tr
+                            key={d.id}
+                            onClick={() => openDelivery(d)}
+                            className="border-b border-[#E0E0E0] last:border-0 hover:bg-[#F8F8FA] transition-colors cursor-pointer"
+                          >
+                            <td className="px-3 py-3.5 align-middle">
+                              <div className="min-w-0">
+                                <div className="text-[13px] font-manrope font-semibold text-[#173420] whitespace-nowrap">
+                                  {d.trackingNumber}
+                                </div>
+                                {d.packageDesc && (
+                                  <div className="text-[11px] font-manrope text-[#757575] truncate max-w-[170px] mt-0.5">
+                                    {d.packageDesc}
+                                  </div>
+                                )}
+                              </div>
+                            </td>
+                            <td className="px-3 py-3.5 align-middle">
+                              <div className="min-w-0">
+                                <div className="text-xs font-manrope text-[#333333] whitespace-nowrap">
+                                  {shortAddr(d.pickupAddress)} <span className="text-[#757575]">(Origin)</span>
+                                </div>
+                                <div className="text-xs font-manrope text-[#333333] whitespace-nowrap mt-0.5">
+                                  {shortAddr(d.dropoffAddress)} <span className="text-[#757575]">(Destination)</span>
+                                </div>
+                              </div>
+                            </td>
+                            <td className="px-3 py-3.5 align-middle">
+                              <span className={`text-xs font-manrope whitespace-nowrap ${d.customerName ? "text-[#333333]" : "text-[#757575]"}`}>
+                                {d.customerName || "—"}
+                              </span>
+                            </td>
+                            <td className="px-3 py-3.5 align-middle">
+                              <div className="min-w-0">
+                                <div className="text-xs font-manrope text-[#333333] whitespace-nowrap">
+                                  {formatDate(d.createdAt)} <span className="text-[#757575]">(Booked)</span>
+                                </div>
+                                {d.scheduledDate && (
+                                  <div className="text-xs font-manrope text-[#173420] whitespace-nowrap mt-0.5">
+                                    {formatDate(d.scheduledDate)} <span className="text-[#757575]">(Due)</span>
+                                  </div>
+                                )}
+                              </div>
+                            </td>
+                            <td className="px-3 py-3.5 align-middle">
+                              <div className="flex items-center gap-2">
+                                <div className="w-[70px] h-1.5 bg-[#F0F0F0] rounded-full overflow-hidden">
+                                  <div className="h-full bg-[#40C4AA] rounded-full" style={{ width: `${pct}%` }} />
+                                </div>
+                                <span className="text-[11px] font-manrope text-[#333333] whitespace-nowrap">{pct}%</span>
+                              </div>
+                            </td>
+                            <td className="px-3 py-3.5 align-middle">
+                              <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-[6px] text-xs font-medium ${pill.bg} ${pill.text}`}>
+                                <span className="w-1.5 h-1.5 rounded-full bg-current" />
+                                {(statusLabels[d.status] || d.status).toUpperCase()}
+                              </span>
+                            </td>
+                            <td className="px-3 py-3.5 align-middle">
+                              <span className="text-xs font-manrope font-semibold text-[#333333] whitespace-nowrap">
+                                {formatCents(d.priceCents)}
+                              </span>
+                            </td>
+                            <td className="px-3 py-3.5 align-middle">
+                              <button
+                                type="button"
+                                aria-label={`View ${d.trackingNumber} details`}
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  openDelivery(d);
+                                }}
+                                className="w-9 h-9 flex items-center justify-center rounded-lg text-[#333333] hover:bg-[#F0F0F0] transition-colors"
+                              >
+                                <DotsThree size={18} />
+                              </button>
+                            </td>
+                          </tr>
+                        );
+                      })
+                    )}
+                  </tbody>
+                </table>
+              </div>
+
+              {/* Footer */}
+              <div className="flex items-center justify-between gap-3 pt-4 border-t border-[#E0E0E0] mt-2">
+                <div className="flex items-center gap-1.5 text-sm font-manrope text-[#757575]">
+                  Show
+                  <button
+                    type="button"
+                    className="h-7 px-2.5 bg-white border border-[#E0E0E0] rounded-lg text-xs font-manrope text-[#333333] flex items-center gap-1"
+                  >
+                    {PAGE_SIZE} <CaretDown size={12} />
+                  </button>
+                  of {filtered.length} result{filtered.length !== 1 ? "s" : ""}
+                </div>
+                <div className="flex items-center gap-1.5">
+                  <button
+                    type="button"
+                    disabled={currentPage <= 1}
+                    onClick={() => setPage(currentPage - 1)}
+                    className="w-7 h-7 rounded-lg bg-white border border-[#E0E0E0] flex items-center justify-center text-[#333333] disabled:opacity-40"
+                    aria-label="Previous page"
+                  >
+                    <CaretLeft size={14} />
+                  </button>
+                  {pageItems(currentPage, totalPages).map((p, i) =>
+                    p === "..." ? (
+                      <span key={`e${i}`} className="text-xs font-manrope text-[#333333] px-1">
+                        …
+                      </span>
+                    ) : (
+                      <button
+                        key={p}
+                        type="button"
+                        onClick={() => setPage(p)}
+                        className={`w-7 h-7 rounded-lg text-xs font-manrope ${
+                          p === currentPage
+                            ? "bg-[#173420] text-white"
+                            : "bg-white border border-[#E0E0E0] text-[#333333] hover:bg-[#F8F8FA]"
+                        }`}
+                      >
+                        {p}
+                      </button>
+                    )
+                  )}
+                  <button
+                    type="button"
+                    disabled={currentPage >= totalPages}
+                    onClick={() => setPage(currentPage + 1)}
+                    className="w-7 h-7 rounded-lg bg-white border border-[#E0E0E0] flex items-center justify-center text-[#333333] disabled:opacity-40"
+                    aria-label="Next page"
+                  >
+                    <CaretRight size={14} />
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
       </div>
 
-      <div className="px-4 sm:px-6 flex-1 min-h-0 pb-6">
-        {loading ? (
-          <div className="space-y-3">
-            {[...Array(4)].map((_, i) => (
-              <div key={i} className="bg-white border border-[#E3E6ED] rounded-xl p-4 animate-pulse">
-                <div className="h-4 w-32 bg-[#E3E6ED] rounded mb-3" />
-                <div className="h-3 w-full bg-[#E3E6ED] rounded mb-2" />
-                <div className="h-3 w-3/4 bg-[#E3E6ED] rounded" />
-              </div>
-            ))}
-          </div>
-        ) : filtered.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-16 text-center bg-white border border-[#E3E6ED] rounded-xl">
-            <Truck size={40} className="text-[#E3E6ED] mb-4" />
-            <p className="text-sm font-medium text-[#666D80] mb-1">
-              {search || statusFilter !== "All" ? "No deliveries match your search" : "No deliveries assigned yet"}
-            </p>
-            <p className="text-xs text-[#8094A7]">
-              {search || statusFilter !== "All"
-                ? "Try a different search or filter"
-                : "When a delivery is assigned to you, it will appear here"}
-            </p>
-          </div>
-        ) : (
-          <div className="space-y-3 overflow-auto">
-            {filtered.map((job) => (
-              <div
-                key={job.id}
-                onClick={() => router.push(`/courier/deliveries?id=${job.id}`)}
-                className="bg-white border border-[#E3E6ED] rounded-xl p-4 shadow-sm cursor-pointer hover:border-[#173420] transition-colors"
-              >
-                <div className="flex items-center justify-between mb-3">
-                  <div className="flex items-center gap-2">
-                    <span className="text-sm font-semibold text-[#173420] font-manrope">{job.trackingNumber}</span>
-                    <StatusBadge label={statusLabels[job.status] || job.status} status={statusVariants[job.status] || "pending"} />
-                  </div>
-                  <div className="flex items-center gap-1 text-[10px] text-[#8094A7]">
-                    <Clock size={12} />
-                    <span>{new Date(job.createdAt).toLocaleDateString()}</span>
-                  </div>
-                </div>
-                <div className="space-y-2">
-                  <div className="flex items-start gap-2">
-                    <MapPin size={14} className="text-[#3D724D] mt-0.5 shrink-0" />
-                    <div className="min-w-0">
-                      <p className="text-xs text-[#8094A7]">Pickup</p>
-                      <p className="text-xs text-[#333333] truncate">{job.pickupAddress || "—"}</p>
-                    </div>
-                  </div>
-                  <div className="flex items-start gap-2">
-                    <MapPin size={14} className="text-[#F04A4A] mt-0.5 shrink-0" />
-                    <div className="min-w-0">
-                      <p className="text-xs text-[#8094A7]">Dropoff</p>
-                      <p className="text-xs text-[#333333] truncate">{job.dropoffAddress || "—"}</p>
-                    </div>
-                  </div>
-                </div>
-                <div className="mt-3 pt-3 border-t border-[#E3E6ED] flex items-center justify-between">
-                  <div className="flex items-center gap-1 text-xs text-[#8094A7]">
-                    <Phone size={12} />
-                    <span>{job.pickupContactName || job.dropoffContactName || "—"}</span>
-                  </div>
-                  <span className="text-xs text-[#173420] font-medium flex items-center gap-1">
-                    View details <ArrowRight size={12} />
-                  </span>
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
-    </div>
+      {/* Delivery detail side sheet */}
+      <CourierDeliverySheet
+        open={Boolean(detailId && token)}
+        id={detailId}
+        token={token}
+        courierName={courierName}
+        onClose={closeSheet}
+        onStatusUpdated={load}
+      />
+    </>
   );
 }
 
 export default function CourierDeliveriesPage() {
   return (
-    <Suspense fallback={<div className="h-full flex items-center justify-center"><div className="animate-pulse text-sm text-[#8094A7]">Loading...</div></div>}>
+    <Suspense fallback={
+      <div className="h-full flex items-center justify-center bg-[#F5F4FD]">
+        <p className="text-sm text-[#8094A7] font-inter">Loading...</p>
+      </div>
+    }>
       <CourierDeliveriesContent />
     </Suspense>
   );

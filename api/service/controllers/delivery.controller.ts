@@ -1,9 +1,12 @@
 import { Request, Response } from "express";
+import { In } from "typeorm";
 import { Delivery } from "../models/delivery.entity";
 import { ServiceType } from "../models/service-type.entity";
 import { Zone } from "../models/zone.entity";
 import { RateMatrix } from "../models/rate-matrix.entity";
 import { TrackingEvent } from "../models/tracking-event.entity";
+import { User } from "../models/user.entity";
+import { CourierProfile } from "../models/courier-profile.entity";
 import AppDataSource from "../configs/ormconfig";
 import Controller from "./controller";
 import crypto from "crypto";
@@ -215,7 +218,22 @@ class DeliveryController extends Controller {
         order: { createdAt: "DESC" },
       });
 
-      return res.send(super.response(super._200, deliveries));
+      const courierIds = [...new Set(deliveries.map((d) => d.courierId).filter((id): id is string => Boolean(id)))];
+      const courierNameMap = new Map<string, string>();
+      if (courierIds.length > 0) {
+        const userRepo = AppDataSource.getRepository(User);
+        const couriers = await userRepo.find({ where: { id: In(courierIds) } });
+        for (const courier of couriers) {
+          courierNameMap.set(courier.id, `${courier.firstname} ${courier.lastname}`.trim());
+        }
+      }
+
+      const rows = deliveries.map((d) => ({
+        ...d,
+        courierName: d.courierId ? courierNameMap.get(d.courierId) ?? null : null,
+      }));
+
+      return res.send(super.response(super._200, rows));
     } catch (error) {
       return res.send(super.response(super._500, null, super.ex(error)));
     }
@@ -242,7 +260,42 @@ class DeliveryController extends Controller {
         order: { createdAt: "ASC" },
       });
 
-      return res.send(super.response(super._200, { ...delivery, trackingEvents: events }));
+      let courierName: string | null = null;
+      let courierPhone: string | null = null;
+      let courierVehicle: string | null = null;
+      let customerName: string | null = null;
+
+      if (delivery.courierId) {
+        const userRepo = AppDataSource.getRepository(User);
+        const courierUser = await userRepo.findOne({ where: { id: delivery.courierId } });
+        if (courierUser) {
+          courierName = `${courierUser.firstname} ${courierUser.lastname}`.trim();
+          courierPhone = courierUser.phoneNumber || null;
+        }
+        const profileRepo = AppDataSource.getRepository(CourierProfile);
+        const courierProfile = await profileRepo.findOne({ where: { userId: delivery.courierId } });
+        courierVehicle = courierProfile?.vehicleType || null;
+      }
+
+      const userRepo = AppDataSource.getRepository(User);
+      const customerUser = await userRepo.findOne({ where: { id: customerId } });
+      if (customerUser) {
+        customerName = `${customerUser.firstname} ${customerUser.lastname}`.trim();
+      }
+
+      const latestEvent = events.length > 0 ? events[events.length - 1] : null;
+
+      return res.send(
+        super.response(super._200, {
+          ...delivery,
+          trackingEvents: events,
+          courierName,
+          courierPhone,
+          courierVehicle,
+          customerName,
+          latestEvent,
+        })
+      );
     } catch (error) {
       return res.send(super.response(super._500, null, super.ex(error)));
     }

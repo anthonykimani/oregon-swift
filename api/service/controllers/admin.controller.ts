@@ -4,8 +4,11 @@ import { CourierProfile } from "../models/courier-profile.entity";
 import { Delivery } from "../models/delivery.entity";
 import { TrackingEvent } from "../models/tracking-event.entity";
 import { Invoice } from "../models/invoice.entity";
+import { InvoiceItem } from "../models/invoice-item.entity";
+import { PaymentEvent } from "../models/payment-event.entity";
 import AppDataSource from "../configs/ormconfig";
 import Controller from "./controller";
+import InvoiceController from "./invoice.controller";
 import { Not, In } from "typeorm";
 
 class AdminController extends Controller {
@@ -679,6 +682,253 @@ class AdminController extends Controller {
       revenueCents: byMonth.get(month)?.revenueCents || 0,
       outstandingCents: byMonth.get(month)?.outstandingCents || 0,
     }));
+  }
+
+  public static async invoices(req: Request, res: Response) {
+    try {
+      if (req.user?.role !== "admin") {
+        return res.send(super.response(super._403, null, ["Admin access required"]));
+      }
+
+      const invoiceRepo = AppDataSource.getRepository(Invoice);
+      const itemRepo = AppDataSource.getRepository(InvoiceItem);
+      const deliveryRepo = AppDataSource.getRepository(Delivery);
+
+      const invoices = await invoiceRepo.find({ order: { issuedAt: "DESC" } });
+
+      const customerIds = [...new Set(invoices.map((i) => i.customerId))];
+      const userRepo = AppDataSource.getRepository(User);
+      const customers = customerIds.length > 0 ? await userRepo.findByIds(customerIds) : [];
+      const customerMap = new Map(customers.map((u) => [u.id, u]));
+
+      const items = invoices.length > 0
+        ? await itemRepo.find({ where: { invoiceId: In(invoices.map((i) => i.id)) } })
+        : [];
+      const itemsByInvoice = new Map<string, InvoiceItem[]>();
+      items.forEach((it) => {
+        if (!itemsByInvoice.has(it.invoiceId)) itemsByInvoice.set(it.invoiceId, []);
+        itemsByInvoice.get(it.invoiceId)!.push(it);
+      });
+
+      const deliveryIds = [...new Set(items.map((it) => it.deliveryId))];
+      const deliveries = deliveryIds.length > 0
+        ? await deliveryRepo.find({ where: { id: In(deliveryIds) } })
+        : [];
+      const deliveryByInvoice = new Map<string, Delivery[]>();
+      items.forEach((it) => {
+        const d = deliveries.find((x) => x.id === it.deliveryId);
+        if (d) {
+          if (!deliveryByInvoice.has(it.invoiceId)) deliveryByInvoice.set(it.invoiceId, []);
+          deliveryByInvoice.get(it.invoiceId)!.push(d);
+        }
+      });
+
+      const courierIds = [...new Set(deliveries.filter((d) => d.courierId).map((d) => d.courierId))];
+      const couriers = courierIds.length > 0 ? await userRepo.findByIds(courierIds) : [];
+      const courierMap = new Map(couriers.map((u) => [u.id, u]));
+
+      const now = new Date();
+      const isOverdue = (inv: Invoice) =>
+        ["unpaid", "sent", "processing"].includes(inv.status) &&
+        inv.dueDate &&
+        new Date(inv.dueDate).getTime() < now.getTime();
+
+      const result = invoices.map((invoice) => {
+        const invItems = itemsByInvoice.get(invoice.id) || [];
+        const invDeliveries = deliveryByInvoice.get(invoice.id) || [];
+        const courierNames = [...new Set(
+          invDeliveries.filter((d) => d.courierId).map((d) => {
+            const u = courierMap.get(d.courierId!);
+            return u ? `${u.firstname} ${u.lastname}` : null;
+          }).filter((n): n is string => !!n)
+        )];
+        return {
+          ...invoice,
+          customerName: customerMap.get(invoice.customerId)
+            ? `${customerMap.get(invoice.customerId)!.firstname} ${customerMap.get(invoice.customerId)!.lastname}`
+            : null,
+          itemCount: invItems.length,
+          courierCount: new Set(invDeliveries.filter((d) => d.courierId).map((d) => d.courierId)).size,
+          courierNames,
+          overdue: isOverdue(invoice),
+        };
+      });
+
+      const counts: Record<string, number> = {
+        all: result.length,
+        processing: 0,
+        paid: 0,
+        disputed: 0,
+        overdue: 0,
+        unpaid: 0,
+      };
+      result.forEach((inv) => {
+        counts[inv.status] = (counts[inv.status] || 0) + 1;
+        if (inv.overdue) counts.overdue += 1;
+      });
+
+      return res.send(super.response(super._200, { items: result, counts }));
+    } catch (error) {
+      return res.send(super.response(super._500, null, super.ex(error)));
+    }
+  }
+
+  public static async getInvoice(req: Request, res: Response) {
+    try {
+      if (req.user?.role !== "admin") {
+        return res.send(super.response(super._403, null, ["Admin access required"]));
+      }
+
+      const { id } = req.params;
+      const invoiceRepo = AppDataSource.getRepository(Invoice);
+      const invoice = await invoiceRepo.findOne({ where: { id } });
+      if (!invoice) {
+        return res.send(super.response(super._404, null, ["Invoice not found"]));
+      }
+
+      const itemRepo = AppDataSource.getRepository(InvoiceItem);
+      const items = await itemRepo.find({ where: { invoiceId: id } });
+      const enriched = await InvoiceController.enrichInvoice(invoice.customerId, invoice, items);
+
+      const eventRepo = AppDataSource.getRepository(PaymentEvent);
+      const events = await eventRepo.find({
+        where: { invoiceId: id },
+        order: { createdAt: "ASC" },
+      });
+
+      const actorIds = [...new Set(events.map((e) => e.actorId).filter((x): x is string => !!x))];
+      const userRepo = AppDataSource.getRepository(User);
+      const actors = actorIds.length > 0 ? await userRepo.findByIds(actorIds) : [];
+      const actorMap = new Map(actors.map((u) => [u.id, u]));
+
+      return res.send(
+        super.response(super._200, {
+          ...enriched,
+          paymentEvents: events.map((e) => ({
+            id: e.id,
+            action: e.action,
+            actorRole: e.actorRole,
+            note: e.note,
+            createdAt: e.createdAt,
+            actorName: e.actorId && actorMap.get(e.actorId)
+              ? `${actorMap.get(e.actorId)!.firstname} ${actorMap.get(e.actorId)!.lastname}`
+              : null,
+          })),
+        })
+      );
+    } catch (error) {
+      return res.send(super.response(super._500, null, super.ex(error)));
+    }
+  }
+
+  public static async approveInvoice(req: Request, res: Response) {
+    try {
+      if (req.user?.role !== "admin") {
+        return res.send(super.response(super._403, null, ["Admin access required"]));
+      }
+
+      const { id } = req.params;
+      const invoiceRepo = AppDataSource.getRepository(Invoice);
+      const invoice = await invoiceRepo.findOne({ where: { id } });
+      if (!invoice) {
+        return res.send(super.response(super._404, null, ["Invoice not found"]));
+      }
+
+      if (invoice.status === "paid") {
+        return res.send(super.response(super._200, invoice));
+      }
+
+      if (!["processing", "disputed"].includes(invoice.status)) {
+        return res.send(
+          super.response(super._400, null, [
+            "Invoice must be processing or disputed to be approved",
+          ])
+        );
+      }
+
+      invoice.status = "paid";
+      invoice.paidAt = new Date();
+      invoice.confirmedBy = req.user.id;
+      await invoiceRepo.save(invoice);
+
+      await InvoiceController.recordEvent(invoice.id, "approved", req.user.id, "admin");
+      return res.send(super.response(super._200, invoice));
+    } catch (error) {
+      return res.send(super.response(super._500, null, super.ex(error)));
+    }
+  }
+
+  public static async releaseInvoice(req: Request, res: Response) {
+    try {
+      if (req.user?.role !== "admin") {
+        return res.send(super.response(super._403, null, ["Admin access required"]));
+      }
+
+      const { id } = req.params;
+      const { note } = req.body || {};
+
+      const invoiceRepo = AppDataSource.getRepository(Invoice);
+      const invoice = await invoiceRepo.findOne({ where: { id } });
+      if (!invoice) {
+        return res.send(super.response(super._404, null, ["Invoice not found"]));
+      }
+
+      if (!["processing", "disputed"].includes(invoice.status)) {
+        return res.send(
+          super.response(super._400, null, [
+            "Invoice must be processing or disputed to be released",
+          ])
+        );
+      }
+
+      invoice.status = "unpaid";
+      invoice.adminNote = note ? String(note).trim() : invoice.adminNote;
+      await invoiceRepo.save(invoice);
+
+      await InvoiceController.recordEvent(
+        invoice.id,
+        "released",
+        req.user.id,
+        "admin",
+        note ? String(note).trim() : null
+      );
+      return res.send(super.response(super._200, invoice));
+    } catch (error) {
+      return res.send(super.response(super._500, null, super.ex(error)));
+    }
+  }
+
+  public static async generateAllInvoices(req: Request, res: Response) {
+    try {
+      if (req.user?.role !== "admin") {
+        return res.send(super.response(super._403, null, ["Admin access required"]));
+      }
+
+      const userRepo = AppDataSource.getRepository(User);
+      const customers = await userRepo.find({
+        where: { role: "customer" as any, deleted: false },
+        select: ["id"],
+      });
+
+      const perCustomer: Record<string, { created: string[]; updated: string[]; billed: number }> = {};
+      let created = 0;
+      let updated = 0;
+      let billed = 0;
+
+      for (const c of customers) {
+        const result = await InvoiceController.generateForCustomer(c.id);
+        perCustomer[c.id] = result;
+        created += result.created.length;
+        updated += result.updated.length;
+        billed += result.billed;
+      }
+
+      return res.send(
+        super.response(super._200, { created, updated, billed, perCustomer })
+      );
+    } catch (error) {
+      return res.send(super.response(super._500, null, super.ex(error)));
+    }
   }
 }
 

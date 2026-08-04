@@ -3,7 +3,6 @@
 import { useState, useEffect } from "react";
 import { useSession } from "next-auth/react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import {
   Plus,
   DotsThree,
@@ -13,10 +12,11 @@ import {
   ArrowRight,
   CheckCircle,
   Package,
+  MapPin,
 } from "@phosphor-icons/react";
 import { Button } from "@/components/ui/button";
-import { StatusBadge } from "@/components/ui/status-badge";
 import { api } from "@/lib/api";
+import { DeliveryDetailSheet } from "@/components/customer/delivery-detail-sheet";
 
 interface DashboardStats {
   activeDeliveries: number;
@@ -52,15 +52,6 @@ const statusLabels: Record<string, string> = {
   "out-for-delivery": "Out for Delivery",
   delivered: "Delivered",
   cancelled: "Cancelled",
-};
-
-const statusVariants: Record<string, "pending" | "processing" | "in-transit" | "out-for-delivery" | "delivered" | "cancelled"> = {
-  pending: "pending",
-  processing: "processing",
-  "in-transit": "in-transit",
-  "out-for-delivery": "out-for-delivery",
-  delivered: "delivered",
-  cancelled: "cancelled",
 };
 
 const activityIcons: Record<string, React.ReactNode> = {
@@ -102,6 +93,26 @@ function formatCents(cents: number) {
   return `$${(cents / 100).toLocaleString("en-US", { minimumFractionDigits: 2 })}`;
 }
 
+const progressByStatus: Record<string, number> = {
+  pending: 10,
+  processing: 20,
+  "picked-up": 35,
+  "in-transit": 60,
+  "out-for-delivery": 80,
+  delivered: 100,
+  "failed-attempt": 40,
+  cancelled: 0,
+};
+
+const statusPillStyles: Record<string, { bg: string; text: string }> = {
+  pending: { bg: "bg-[#FFF3D6]", text: "text-[#B8860B]" },
+  processing: { bg: "bg-[#E3EDFF]", text: "text-[#235BC2]" },
+  "in-transit": { bg: "bg-[#E0E0E0]", text: "text-[#333333]" },
+  "out-for-delivery": { bg: "bg-[#FCDEE0]", text: "text-[#F04A4A]" },
+  delivered: { bg: "bg-[#D9F9E7]", text: "text-[#007837]" },
+  cancelled: { bg: "bg-[#F0F0F0]", text: "text-[#999999]" },
+};
+
 function StatSkeleton() {
   return (
     <div className="bg-white border border-[#E3E6ED] rounded-lg p-5 animate-pulse shadow-sm min-h-[135px]">
@@ -114,10 +125,11 @@ function StatSkeleton() {
 
 export default function CustomerDashboard() {
   const { data: session } = useSession();
-  const router = useRouter();
   const [stats, setStats] = useState<DashboardStats | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [activeDeliveryId, setActiveDeliveryId] = useState<string | null>(null);
+  const [sheetOpen, setSheetOpen] = useState(false);
 
   const firstName = session?.user?.firstname || session?.user?.name?.split(" ")[0] || "there";
   const token = session?.accessToken;
@@ -216,8 +228,13 @@ export default function CustomerDashboard() {
 
       <div className="px-5 flex-1 flex gap-[10px] min-h-0 pb-5">
         <div className="flex-1 bg-[#FEFEFE] border border-[#E3E6ED] rounded-xl p-4 flex flex-col min-w-0 shadow-sm">
-          <div className="flex items-center justify-between mb-3">
-            <h3 className="text-base font-manrope text-[#333333]">Recent Deliveries</h3>
+          <div className="flex items-center gap-2 bg-[#f9f9fb] rounded-[10px] px-4 py-2.5 mb-4">
+            <span className="w-[10px] h-[10px] rounded-full bg-[#173420] shrink-0" />
+            <h3 className="text-base font-manrope font-medium text-[#161618]">Recent Deliveries</h3>
+            <span className="inline-flex items-center justify-center min-w-[20px] h-[20px] px-1.5 bg-white border border-[#e5e5ec] rounded-[7px] text-xs font-medium text-[#161618]">
+              {deliveries.length}
+            </span>
+            <div className="flex-1" />
             {hasDeliveries && (
               <Link
                 href="/dashboard/deliveries"
@@ -231,12 +248,12 @@ export default function CustomerDashboard() {
           {loading ? (
             <div className="animate-pulse flex-1">
               {[...Array(4)].map((_, i) => (
-                <div key={i} className="flex items-center gap-4 py-3 border-b border-[#E0E0E0]">
-                  <div className="h-3 w-24 bg-[#E3E6ED] rounded" />
-                  <div className="h-3 w-20 bg-[#E3E6ED] rounded" />
-                  <div className="h-3 w-20 bg-[#E3E6ED] rounded" />
+                <div key={i} className="flex items-center gap-6 py-3.5 border-b border-[#f3f4f6]">
+                  <div className="h-3 w-28 bg-[#E3E6ED] rounded" />
+                  <div className="h-3 w-40 bg-[#E3E6ED] rounded" />
+                  <div className="h-3 w-40 bg-[#E3E6ED] rounded" />
                   <div className="h-3 w-16 bg-[#E3E6ED] rounded" />
-                  <div className="h-5 w-20 bg-[#E3E6ED] rounded-full" />
+                  <div className="h-5 w-24 bg-[#E3E6ED] rounded-full" />
                 </div>
               ))}
             </div>
@@ -254,35 +271,76 @@ export default function CustomerDashboard() {
             </div>
           ) : (
             <div className="flex-1 overflow-auto">
-              <table className="w-full text-[10px] font-manrope">
+              <table className="w-full text-sm font-manrope">
                 <thead>
-                  <tr>
-                    <th className="text-left font-manrope text-[10px] font-semibold text-[#333333] tracking-[0.05em] py-3 px-2 bg-[#DCE8D6] rounded-l-lg">Tracking ID</th>
-                    <th className="text-left font-manrope text-[10px] font-semibold text-[#333333] tracking-[0.05em] py-3 px-2 bg-[#DCE8D6]">Pickup</th>
-                    <th className="text-left font-manrope text-[10px] font-semibold text-[#333333] tracking-[0.05em] py-3 px-2 bg-[#DCE8D6]">Dropoff</th>
-                    <th className="text-left font-manrope text-[10px] font-semibold text-[#333333] tracking-[0.05em] py-3 px-2 bg-[#DCE8D6]">Date</th>
-                    <th className="text-left font-manrope text-[10px] font-semibold text-[#333333] tracking-[0.05em] py-3 px-2 bg-[#DCE8D6] rounded-r-lg">Status</th>
+                  <tr className="border-b border-[#e2e4e9]/30">
+                    <th className="text-left font-manrope text-[14px] font-medium text-[#44444a] py-3 px-3 bg-[#f9f9fb] rounded-l-lg whitespace-nowrap">Tracking ID</th>
+                    <th className="text-left font-manrope text-[14px] font-medium text-[#44444a] py-3 px-3 bg-[#f9f9fb]">Pickup</th>
+                    <th className="text-left font-manrope text-[14px] font-medium text-[#44444a] py-3 px-3 bg-[#f9f9fb]">Dropoff</th>
+                    <th className="text-left font-manrope text-[14px] font-medium text-[#44444a] py-3 px-3 bg-[#f9f9fb]">Date</th>
+                    <th className="text-left font-manrope text-[14px] font-medium text-[#44444a] py-3 px-3 bg-[#f9f9fb]">Status</th>
+                    <th className="text-left font-manrope text-[14px] font-medium text-[#44444a] py-3 px-3 bg-[#f9f9fb]">Progress</th>
+                    <th className="text-left font-manrope text-[14px] font-medium text-[#44444a] py-3 px-3 bg-[#f9f9fb] rounded-r-lg"></th>
                   </tr>
                 </thead>
                 <tbody>
-                  {deliveries.map((d) => (
-                    <tr
-                      key={d.id}
-                      onClick={() => router.push(`/dashboard/deliveries?id=${d.id}`)}
-                      className="border-b border-[#E0E0E0] last:border-0 cursor-pointer hover:bg-[#F4F8F2] transition-colors"
-                    >
-                      <td className="text-[#173420] py-3 px-2 font-medium">{d.trackingNumber}</td>
-                      <td className="text-[#333333] py-3 px-2 max-w-[140px] truncate">{d.pickupAddress || "—"}</td>
-                      <td className="text-[#333333] py-3 px-2 max-w-[140px] truncate">{d.dropoffAddress || "—"}</td>
-                      <td className="text-[#333333] py-3 px-2 whitespace-nowrap">{formatDate(d.createdAt)}</td>
-                      <td className="py-3 px-2">
-                        <StatusBadge
-                          label={statusLabels[d.status] || d.status}
-                          status={statusVariants[d.status] || "pending"}
-                        />
-                      </td>
-                    </tr>
-                  ))}
+                  {deliveries.map((d) => {
+                    const pill = statusPillStyles[d.status] || { bg: "bg-[#F0F0F0]", text: "text-[#999999]" };
+                    const pct = progressByStatus[d.status] ?? 10;
+                    return (
+                      <tr
+                        key={d.id}
+                        onClick={() => {
+                          setActiveDeliveryId(d.id);
+                          setSheetOpen(true);
+                        }}
+                        className="border-b border-[#f3f4f6] last:border-0 cursor-pointer hover:bg-[#F8F8FA] transition-colors"
+                      >
+                        <td className="text-[#161618] py-3.5 px-3 font-medium whitespace-nowrap">{d.trackingNumber}</td>
+                        <td className="text-[#333333] py-3.5 px-3 max-w-[150px]">
+                          <div className="flex items-center gap-1.5 min-w-0">
+                            <MapPin size={13} className="text-[#173420] shrink-0" />
+                            <span className="truncate">{d.pickupAddress || "—"}</span>
+                          </div>
+                        </td>
+                        <td className="text-[#333333] py-3.5 px-3 max-w-[150px]">
+                          <div className="flex items-center gap-1.5 min-w-0">
+                            <MapPin size={13} className="text-[#40C4AA] shrink-0" />
+                            <span className="truncate">{d.dropoffAddress || "—"}</span>
+                          </div>
+                        </td>
+                        <td className="text-[#333333] py-3.5 px-3 whitespace-nowrap">{formatDate(d.createdAt)}</td>
+                        <td className="py-3.5 px-3">
+                          <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-[6px] text-xs font-medium ${pill.bg} ${pill.text}`}>
+                            <span className="w-1.5 h-1.5 rounded-full bg-current" />
+                            {(statusLabels[d.status] || d.status).toUpperCase()}
+                          </span>
+                        </td>
+                        <td className="py-3.5 px-3">
+                          <div className="flex items-center gap-2">
+                            <div className="w-[75px] h-[6px] bg-[#f1f1f5] rounded-full overflow-hidden">
+                              <div className="h-full bg-[#40C4AA] rounded-full" style={{ width: `${pct}%` }} />
+                            </div>
+                            <span className="text-xs text-[#44444a]">{pct}%</span>
+                          </div>
+                        </td>
+                        <td className="py-3.5 px-3">
+                          <button
+                            type="button"
+                            aria-label={`View ${d.trackingNumber} details`}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setActiveDeliveryId(d.id);
+                              setSheetOpen(true);
+                            }}
+                            className="w-10 h-10 flex items-center justify-center bg-white border border-[#f1f1f5] rounded-[10px] hover:bg-[#F8F8FA] transition-colors"
+                          >
+                            <DotsThree size={16} className="text-[#252528]" />
+                          </button>
+                        </td>
+                      </tr>
+                    );
+                  })}
                 </tbody>
               </table>
             </div>
@@ -330,6 +388,14 @@ export default function CustomerDashboard() {
           )}
         </div>
       </div>
+
+      {/* Delivery detail side sheet */}
+      <DeliveryDetailSheet
+        open={sheetOpen}
+        id={activeDeliveryId}
+        token={token}
+        onClose={() => setSheetOpen(false)}
+      />
     </div>
   );
 }

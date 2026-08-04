@@ -14,6 +14,12 @@ router.patch("/deliveries/:id/assign", authMiddleware, AdminController.assignCou
 
 router.get("/couriers", authMiddleware, AdminController.getCouriers);
 
+router.get("/invoices", authMiddleware, AdminController.invoices);
+router.post("/invoices/generate", authMiddleware, AdminController.generateAllInvoices);
+router.get("/invoices/:id", authMiddleware, AdminController.getInvoice);
+router.post("/invoices/:id/approve", authMiddleware, AdminController.approveInvoice);
+router.post("/invoices/:id/release", authMiddleware, AdminController.releaseInvoice);
+
 router.get("/dashboard/stats", authMiddleware, AdminController.dashboardStats);
 
 export default router;

@@ -9,6 +9,7 @@ import {
   Package,
   Truck,
   Bank,
+  ChatsCircle,
   UserCircle,
   Headphones,
   SignOut,
@@ -20,12 +21,14 @@ import {
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { useUnreadCount } from "@/lib/messaging/use-unread-count";
 
 const navItems = [
   { name: "Dashboard", icon: House, path: "/dashboard" },
   { name: "Book Delivery", icon: Package, path: "/dashboard/book" },
   { name: "My Deliveries", icon: Truck, path: "/dashboard/deliveries" },
   { name: "Invoices", icon: Bank, path: "/dashboard/invoices" },
+  { name: "Messages", icon: ChatsCircle, path: "/dashboard/messages" },
 ];
 
 const bottomNav = [
@@ -37,6 +40,7 @@ const bottomNav = [
 export function CustomerLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const { data: session } = useSession();
+  const { unreadCount } = useUnreadCount(session?.accessToken);
   const [sidebarOpen, setSidebarOpen] = useState(true);
 
   useEffect(() => {
@@ -108,6 +112,11 @@ export function CustomerLayout({ children }: { children: React.ReactNode }) {
                 )}
                 <Icon size={20} weight={active ? "fill" : "regular"} />
                 <span className="flex-1">{item.name}</span>
+                {item.name === "Messages" && unreadCount > 0 && (
+                  <span className="h-[18px] min-w-[18px] px-1 flex items-center justify-center rounded-full bg-[#C0392B] text-white text-[10px] font-manrope font-bold">
+                    {unreadCount > 99 ? "99+" : unreadCount}
+                  </span>
+                )}
                 <CaretRight size={12} className="text-inherit opacity-50" />
               </Link>
             );
