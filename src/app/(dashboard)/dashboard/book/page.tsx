@@ -50,6 +50,7 @@ export default function BookDeliveryPage() {
   const [step, setStep] = useState(0);
   const [form, setForm] = useState<FormData>(initialForm);
   const [serviceTypes, setServiceTypes] = useState<ServiceType[]>([]);
+  const [serviceTypesLoading, setServiceTypesLoading] = useState(true);
   const [zones, setZones] = useState<Zone[]>([]);
   const [estimateLoading, setEstimateLoading] = useState(false);
   const [estimate, setEstimate] = useState<{ priceCents: number; pickupZoneName: string | null; dropoffZoneName: string | null } | null>(null);
@@ -76,8 +77,9 @@ export default function BookDeliveryPage() {
   useEffect(() => {
     if (status !== "authenticated" || !session?.accessToken) return;
     api<ServiceType[]>("/service-types", { token: session.accessToken }).then((stRes) => {
-      if (stRes.status === 200 && stRes.data?.length) setServiceTypes(stRes.data);
-    });
+      setServiceTypesLoading(false);
+      if (stRes.status === 200 && stRes.data) setServiceTypes(stRes.data);
+    }).catch(() => setServiceTypesLoading(false));
     api<Zone[]>("/zones", { token: session.accessToken }).then((zRes) => {
       if (zRes.status === 200 && zRes.data?.length) setZones(zRes.data);
     });
@@ -420,8 +422,10 @@ export default function BookDeliveryPage() {
               <div className="sm:col-span-2">
                 <label className="block text-sm font-inter font-medium text-[#173420] mb-2">Service Type</label>
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                  {serviceTypes.length === 0 ? (
+                  {serviceTypesLoading ? (
                     <p className="text-sm text-[#666D80] col-span-full">Loading service types...</p>
+                  ) : serviceTypes.length === 0 ? (
+                    <p className="text-sm text-[#666D80] col-span-full">No service types available.</p>
                   ) : serviceTypes.map((st) => (
                     <button
                       key={st.id}
