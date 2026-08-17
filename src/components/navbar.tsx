@@ -3,21 +3,31 @@
 import { CaretDown, Globe, List, X } from "@phosphor-icons/react/dist/ssr";
 import { useState } from "react";
 
+const navLinks = [
+  { label: "Location", href: "/location" },
+  { label: "About", href: "/about" },
+  { label: "Customer Care", href: "/customer-care" },
+  { label: "Blog", href: "/blog" },
+];
+
 export default function Navbar() {
   const [mobileOpen, setMobileOpen] = useState(false);
 
   return (
     <nav className="relative flex items-center justify-between px-6 lg:px-10 xl:px-24 py-3 bg-[#fcfcfc] z-50">
-      <span className="font-aboreto text-sm md:text-lg xl:text-xl text-brand truncate min-w-0 flex-1 lg:flex-none">Oregon Swift Deliveries LLC</span>
+      <a href="/" className="font-aboreto text-sm md:text-lg xl:text-xl text-brand truncate min-w-0 flex-1 lg:flex-none hover:opacity-80 transition-opacity">Oregon Swift Deliveries LLC</a>
 
       <div className="hidden lg:flex items-center gap-6 xl:gap-8">
+        <a href="/" className="font-dm-sans text-sm xl:text-base text-foreground hover:text-brand transition-colors whitespace-nowrap">
+          Home
+        </a>
         <div className="flex items-center gap-1">
-          <a href="#" className="font-dm-sans text-sm xl:text-base text-foreground hover:text-brand transition-colors whitespace-nowrap">Services</a>
+          <a href="/services" className="font-dm-sans text-sm xl:text-base text-foreground hover:text-brand transition-colors whitespace-nowrap">Services</a>
           <CaretDown size={10} className="text-foreground shrink-0" weight="bold" />
         </div>
-        {["Location", "About", "Customer Care"].map((item) => (
-          <a key={item} href="#" className="font-dm-sans text-sm xl:text-base text-foreground hover:text-brand transition-colors whitespace-nowrap">
-            {item}
+        {navLinks.map((item) => (
+          <a key={item.label} href={item.href} className="font-dm-sans text-sm xl:text-base text-foreground hover:text-brand transition-colors whitespace-nowrap">
+            {item.label}
           </a>
         ))}
         <a href="/tracking" className="font-dm-sans text-sm xl:text-base text-foreground hover:text-brand transition-colors whitespace-nowrap">
@@ -49,15 +59,21 @@ export default function Navbar() {
 
       {mobileOpen && (
         <div className="absolute top-full left-0 w-full bg-[#fcfcfc] border-t border-foreground/5 px-6 py-6 flex flex-col gap-4 lg:hidden shadow-lg">
+          <a href="/" className="font-dm-sans text-base text-foreground">
+            Home
+          </a>
           <div className="flex items-center gap-1">
-            <a href="#" className="font-dm-sans text-base text-foreground">Services</a>
+            <a href="/services" className="font-dm-sans text-base text-foreground">Services</a>
             <CaretDown size={10} className="text-foreground" weight="bold" />
           </div>
-          {["Location", "About", "Customer Care"].map((item) => (
-            <a key={item} href="#" className="font-dm-sans text-base text-foreground">
-              {item}
+          {navLinks.map((item) => (
+            <a key={item.label} href={item.href} className="font-dm-sans text-base text-foreground">
+              {item.label}
             </a>
           ))}
+          <a href="/tracking" className="font-dm-sans text-base text-foreground">
+            Track
+          </a>
           <div className="h-px bg-foreground/10 my-2" />
           <div className="flex items-center gap-1">
             <Globe size={14} className="text-foreground" />

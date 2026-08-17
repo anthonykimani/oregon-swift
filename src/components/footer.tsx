@@ -12,14 +12,18 @@ export default function Footer() {
                 Company
               </h4>
               <ul className="space-y-4 xl:space-y-[34px]">
-                {["About", "Contact", "Blog"].map((link) => (
-                  <li key={link}>
+                {[
+                  { label: "About", href: "/about" },
+                  { label: "Contact", href: "/customer-care" },
+                  { label: "Blog", href: "/blog" },
+                ].map((link) => (
+                  <li key={link.label}>
                     <a
-                      href="#"
+                      href={link.href}
                       className="font-manrope text-sm xl:text-base hover:opacity-70 transition-opacity"
                       style={{ color: "#3a3a3a" }}
                     >
-                      {link}
+                      {link.label}
                     </a>
                   </li>
                 ))}
@@ -33,19 +37,21 @@ export default function Footer() {
                 Product
               </h4>
               <ul className="space-y-4 xl:space-y-[34px]">
-                {["Get a Quote", "Schedule a Pickup", "Real-Time Tracking"].map(
-                  (link) => (
-                    <li key={link}>
-                      <a
-                        href="#"
-                        className="font-manrope text-sm xl:text-base hover:opacity-70 transition-opacity"
-                        style={{ color: "#3a3a3a" }}
-                      >
-                        {link}
-                      </a>
-                    </li>
-                  )
-                )}
+                {[
+                  { label: "Get a Quote", href: "/get-a-quote" },
+                  { label: "Schedule a Pickup", href: "/dashboard/book" },
+                  { label: "Real-Time Tracking", href: "/tracking" },
+                ].map((link) => (
+                  <li key={link.label}>
+                    <a
+                      href={link.href}
+                      className="font-manrope text-sm xl:text-base hover:opacity-70 transition-opacity"
+                      style={{ color: "#3a3a3a" }}
+                    >
+                      {link.label}
+                    </a>
+                  </li>
+                ))}
               </ul>
             </div>
             <div>
@@ -56,14 +62,17 @@ export default function Footer() {
                 Legal
               </h4>
               <ul className="space-y-4 xl:space-y-[34px]">
-                {["Terms & conditions", "Privacy policy"].map((link) => (
-                  <li key={link}>
+                {[
+                  { label: "Terms & conditions", href: "/terms" },
+                  { label: "Privacy policy", href: "/privacy" },
+                ].map((link) => (
+                  <li key={link.label}>
                     <a
-                      href="#"
+                      href={link.href}
                       className="font-manrope text-sm xl:text-base hover:opacity-70 transition-opacity"
                       style={{ color: "#3a3a3a" }}
                     >
-                      {link}
+                      {link.label}
                     </a>
                   </li>
                 ))}
