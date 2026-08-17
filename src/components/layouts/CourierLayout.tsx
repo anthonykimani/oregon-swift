@@ -10,6 +10,7 @@ import {
   Wallet,
   Receipt,
   ChatsCircle,
+  UserCircle,
   SignOut,
   CaretLeft,
   CaretRight,
@@ -18,6 +19,9 @@ import {
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 import { useUnreadCount } from "@/lib/messaging/use-unread-count";
+import { CourierPresenceProvider, useCourierPresence } from "@/lib/courier-presence";
+import { useCourierLocationReporter } from "@/lib/location/use-courier-location-reporter";
+import { useLocationVerification } from "@/lib/location/use-location-verification";
 
 const navItems = [
   { name: "Dashboard", icon: House, path: "/courier" },
@@ -25,6 +29,7 @@ const navItems = [
   { name: "Invoices", icon: Receipt, path: "/courier/invoices" },
   { name: "Earnings", icon: Wallet, path: "/courier/earnings" },
   { name: "Messages", icon: ChatsCircle, path: "/courier/messages" },
+  { name: "Account", icon: UserCircle, path: "/courier/account" },
 ];
 
 const pageTitles: Record<string, string> = {
@@ -38,14 +43,27 @@ const pageTitles: Record<string, string> = {
 };
 
 export function CourierLayout({ children }: { children: React.ReactNode }) {
+  return (
+    <CourierPresenceProvider>
+      <CourierShell>{children}</CourierShell>
+    </CourierPresenceProvider>
+  );
+}
+
+function CourierShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const { data: session } = useSession();
   const { unreadCount } = useUnreadCount(session?.accessToken);
-  const [sidebarOpen, setSidebarOpen] = useState(true);
+  const { availabilityStatus } = useCourierPresence();
+  const [sidebarOpen, setSidebarOpen] = useState(
+    () => typeof window !== "undefined" && window.matchMedia("(min-width: 1024px)").matches
+  );
+
+  useCourierLocationReporter(session?.accessToken, availabilityStatus === "online");
+  useLocationVerification(session?.accessToken);
 
   useEffect(() => {
     const mq = window.matchMedia("(min-width: 1024px)");
-    setSidebarOpen(mq.matches);
     const handler = (e: MediaQueryListEvent) => setSidebarOpen(e.matches);
     mq.addEventListener("change", handler);
     return () => mq.removeEventListener("change", handler);
@@ -162,9 +180,11 @@ export function CourierLayout({ children }: { children: React.ReactNode }) {
             />
           </div>
 
-          <div className="w-10 h-10 rounded-full bg-[#173420] flex items-center justify-center text-white text-sm font-semibold">
-            {session?.user?.firstname?.[0] || session?.user?.name?.[0] || "C"}
-          </div>
+          <Link href="/courier/account" aria-label="Account">
+            <div className="w-10 h-10 rounded-full bg-[#173420] flex items-center justify-center text-white text-sm font-semibold">
+              {session?.user?.firstname?.[0] || session?.user?.name?.[0] || "C"}
+            </div>
+          </Link>
         </header>
 
         <main className="flex-1 overflow-y-auto">{children}</main>

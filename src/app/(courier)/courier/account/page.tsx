@@ -2,10 +2,18 @@
 
 import { useSession } from "next-auth/react";
 import { Truck, Gear, Warning } from "@phosphor-icons/react";
+import { Switch } from "@/components/ui/switch";
+import { useCourierPresence } from "@/lib/courier-presence";
 
 export default function CourierAccount() {
   const { data: session } = useSession();
   const user = session?.user;
+  const { availabilityStatus, lastSeenAt, loading, toggling, setAvailability } = useCourierPresence();
+
+  const handleToggleAvailability = async () => {
+    const next = availabilityStatus === "online" ? "offline" : "online";
+    await setAvailability(next);
+  };
 
   return (
     <div className="h-full flex flex-col">
@@ -32,12 +40,31 @@ export default function CourierAccount() {
         </div>
 
         <div className="bg-white border border-[#E3E6ED] rounded-xl p-4 shadow-sm">
-          <h3 className="flex items-center gap-2 text-sm font-semibold text-[#173420] mb-3">
-            <Truck size={16} /> Vehicle & Work Info
-          </h3>
-          <p className="text-sm text-[#8094A7]">
-            Vehicle details, service zones, and certifications are managed by the admin team. Contact support to update your profile.
-          </p>
+          <div className="flex items-center justify-between gap-3">
+            <div>
+              <h3 className="flex items-center gap-2 text-sm font-semibold text-[#173420]">
+                <Truck size={16} /> Available for work
+              </h3>
+              <p className="text-xs text-[#8094A7] mt-1">
+                {loading
+                  ? "Loading your availability…"
+                  : availabilityStatus === "online"
+                    ? "You're online — admin can assign you loads."
+                    : "You're offline — admin won't assign you new loads."}
+              </p>
+              {lastSeenAt && (
+                <p className="text-xs text-[#8094A7] mt-0.5">
+                  Last seen {new Date(lastSeenAt).toLocaleString()}
+                </p>
+              )}
+            </div>
+            <Switch
+              checked={availabilityStatus === "online"}
+              disabled={loading || toggling}
+              onCheckedChange={handleToggleAvailability}
+              aria-label="Toggle availability"
+            />
+          </div>
         </div>
 
         <div className="bg-white border border-[#E3E6ED] rounded-xl p-4 shadow-sm">

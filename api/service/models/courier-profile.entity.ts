@@ -24,4 +24,10 @@ export class CourierProfile extends BaseEntity {
 
   @Column({ default: true })
   active: boolean;
+
+  @Column({ length: 20, default: "offline" })
+  availabilityStatus: string;
+
+  @Column({ type: "timestamp", nullable: true })
+  lastSeenAt: Date | null;
 }

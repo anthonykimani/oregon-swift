@@ -499,7 +499,13 @@ class AdminController extends Controller {
           lastname: user.lastname,
           phoneNumber: user.phoneNumber,
           profile: profile
-            ? { vehicleType: profile.vehicleType, zones: profile.zones, active: profile.active }
+            ? {
+                vehicleType: profile.vehicleType,
+                zones: profile.zones,
+                active: profile.active,
+                availabilityStatus: profile.availabilityStatus,
+                lastSeenAt: profile.lastSeenAt,
+              }
             : null,
         };
       });

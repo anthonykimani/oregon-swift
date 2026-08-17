@@ -3,11 +3,14 @@ import { Delivery } from "../models/delivery.entity";
 import { TrackingEvent } from "../models/tracking-event.entity";
 import { Invoice } from "../models/invoice.entity";
 import { InvoiceItem } from "../models/invoice-item.entity";
+import { CourierProfile } from "../models/courier-profile.entity";
+import { CourierLocation } from "../models/courier-location.entity";
 import { User } from "../models/user.entity";
 import AppDataSource from "../configs/ormconfig";
 import Controller from "./controller";
 import InvoiceController from "./invoice.controller";
-import { Not, In } from "typeorm";
+import SocketService from "../utils/socket/app.socket.manager";
+import { Not, In, MoreThan } from "typeorm";
 
 class CourierController extends Controller {
   public static async deliveries(req: Request, res: Response) {
@@ -423,6 +426,149 @@ class CourierController extends Controller {
         String(reason).trim()
       );
       return res.send(super.response(super._200, invoice));
+    } catch (error) {
+      return res.send(super.response(super._500, null, super.ex(error)));
+    }
+  }
+
+  public static async availability(req: Request, res: Response) {
+    try {
+      const courierId = req.user?.id;
+      if (!courierId) {
+        return res.send(super.response(super._401, null, ["Unauthorized"]));
+      }
+
+      const profileRepo = AppDataSource.getRepository(CourierProfile);
+      const profile = await profileRepo.findOne({ where: { userId: courierId } });
+      if (!profile) {
+        return res.send(super.response(super._404, null, ["Courier profile not found"]));
+      }
+
+      return res.send(
+        super.response(super._200, {
+          availabilityStatus: profile.availabilityStatus,
+          lastSeenAt: profile.lastSeenAt,
+        })
+      );
+    } catch (error) {
+      return res.send(super.response(super._500, null, super.ex(error)));
+    }
+  }
+
+  public static async updateAvailability(req: Request, res: Response) {
+    try {
+      const courierId = req.user?.id;
+      if (!courierId) {
+        return res.send(super.response(super._401, null, ["Unauthorized"]));
+      }
+
+      const { availabilityStatus } = req.body;
+      if (!["online", "offline"].includes(availabilityStatus)) {
+        return res.send(super.response(super._400, null, ["availabilityStatus must be 'online' or 'offline'"]));
+      }
+
+      const profileRepo = AppDataSource.getRepository(CourierProfile);
+      const profile = await profileRepo.findOne({ where: { userId: courierId } });
+      if (!profile) {
+        return res.send(super.response(super._404, null, ["Courier profile not found"]));
+      }
+
+      profile.availabilityStatus = availabilityStatus;
+      profile.lastSeenAt = new Date();
+      await profileRepo.save(profile);
+
+      const userRepo = AppDataSource.getRepository(User);
+      const user = await userRepo.findOne({ where: { id: courierId } });
+
+      SocketService.getInstance().emitToRole("admin", "courier:availability", {
+        courierId,
+        courierName: user ? `${user.firstname} ${user.lastname}`.trim() : null,
+        vehicleType: profile.vehicleType,
+        availabilityStatus: profile.availabilityStatus,
+        lastSeenAt: profile.lastSeenAt,
+        updatedAt: new Date(),
+      });
+
+      return res.send(
+        super.response(super._200, {
+          availabilityStatus: profile.availabilityStatus,
+          lastSeenAt: profile.lastSeenAt,
+        })
+      );
+    } catch (error) {
+      return res.send(super.response(super._500, null, super.ex(error)));
+    }
+  }
+
+  public static async reportLocation(req: Request, res: Response) {
+    try {
+      const courierId = req.user?.id;
+      if (!courierId || req.user?.role !== "courier") {
+        return res.send(super.response(super._403, null, ["Courier access required"]));
+      }
+
+      const { lat, lng, accuracy, speed } = req.body;
+
+      if (typeof lat !== "number" || typeof lng !== "number" || Number.isNaN(lat) || Number.isNaN(lng)) {
+        return res.send(super.response(super._400, null, ["lat and lng are required numbers"]));
+      }
+      if (lat < -90 || lat > 90 || lng < -180 || lng > 180) {
+        return res.send(super.response(super._400, null, ["lat/lng out of range"]));
+      }
+      if (accuracy != null && (typeof accuracy !== "number" || accuracy < 0)) {
+        return res.send(super.response(super._400, null, ["accuracy must be a non-negative number"]));
+      }
+      if (speed != null && (typeof speed !== "number" || speed < 0)) {
+        return res.send(super.response(super._400, null, ["speed must be a non-negative number"]));
+      }
+
+      const now = new Date();
+
+      // Throttle DB writes: skip redundant rows within 10s to keep the table bounded.
+      // lastSeenAt is still bumped so presence stays accurate regardless of insert throttle.
+      const locationRepo = AppDataSource.getRepository(CourierLocation);
+      const recent = await locationRepo.findOne({
+        where: { courierId, recordedAt: MoreThan(new Date(now.getTime() - 10_000)) },
+        order: { recordedAt: "DESC" },
+      });
+
+      if (!recent) {
+        const location = new CourierLocation();
+        location.courierId = courierId;
+        location.lat = lat;
+        location.lng = lng;
+        location.accuracy = accuracy ?? null;
+        location.speed = speed ?? null;
+        location.recordedAt = now;
+        await locationRepo.save(location);
+      }
+
+      const profileRepo = AppDataSource.getRepository(CourierProfile);
+      const profile = await profileRepo.findOne({ where: { userId: courierId } });
+      if (profile) {
+        profile.lastSeenAt = now;
+        await profileRepo.save(profile);
+      }
+
+      SocketService.getInstance().emitToRole("admin", "location:update", {
+        courierId,
+        lat,
+        lng,
+        accuracy: accuracy ?? null,
+        speed: speed ?? null,
+        recordedAt: now,
+      });
+
+      return res.send(
+        super.response(super._200, {
+          lat,
+          lng,
+          accuracy: accuracy ?? null,
+          speed: speed ?? null,
+          recordedAt: now,
+          lastSeenAt: now,
+        })
+      );
     } catch (error) {
       return res.send(super.response(super._500, null, super.ex(error)));
     }

@@ -9,6 +9,9 @@ router.get("/courier/deliveries/:id", authMiddleware, CourierController.getDeliv
 router.patch("/courier/deliveries/:id/status", authMiddleware, CourierController.updateStatus);
 router.get("/courier/earnings", authMiddleware, CourierController.earnings);
 router.get("/courier/stats", authMiddleware, CourierController.dashboardStats);
+router.get("/courier/availability", authMiddleware, CourierController.availability);
+router.patch("/courier/availability", authMiddleware, CourierController.updateAvailability);
+router.post("/courier/location", authMiddleware, CourierController.reportLocation);
 
 router.get("/courier/invoices", authMiddleware, CourierController.invoices);
 router.get("/courier/invoices/:id", authMiddleware, CourierController.getInvoice);

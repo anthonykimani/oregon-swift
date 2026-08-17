@@ -15,6 +15,7 @@ import { PaymentEvent } from "../models/payment-event.entity";
 import { Notification } from "../models/notification.entity";
 import { Conversation } from "../models/conversation.entity";
 import { Message } from "../models/message.entity";
+import { CourierLocation } from "../models/courier-location.entity";
 
 dotenv.config({ path: `.env.${process.env.NODE_ENV}` });
 
@@ -55,6 +56,7 @@ const AppDataSource = new DataSource({
     Notification,
     Conversation,
     Message,
+    CourierLocation,
   ],
   synchronize: true,
   dropSchema: false,

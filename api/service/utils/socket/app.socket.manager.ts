@@ -64,6 +64,10 @@ export class SocketService {
       if (user?.id) {
         socket.join(`u:${user.id}`);
       }
+      // Join a role room so role-scoped broadcasts (e.g. availability to admins) reach the right clients.
+      if (user?.role) {
+        socket.join(`role:${user.role}`);
+      }
 
       socket.on("thread:join", (data: { conversationId: string }) => {
         const userId = socket.data.user?.id as string | undefined;
@@ -87,6 +91,10 @@ export class SocketService {
 
   public emitToUser(userId: string, event: string, payload: unknown) {
     this.io?.to(`u:${userId}`).emit(event, payload);
+  }
+
+  public emitToRole(role: string, event: string, payload: unknown) {
+    this.io?.to(`role:${role}`).emit(event, payload);
   }
 
   public broadcastNewMessage(
