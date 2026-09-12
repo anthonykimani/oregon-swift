@@ -269,7 +269,7 @@ export default function AdminDashboard() {
               </div>
             ) : (
               <div className="overflow-x-auto">
-              <table className="w-full min-w-[520px] text-[10px] font-manrope">
+              <table className="w-full min-w-[520px] text-xs font-manrope">
                 <thead>
                   <tr className="bg-[#DCE8D6] rounded-lg">
                     <th className="text-left text-[#333333] font-medium py-3 px-2">Tracking</th>

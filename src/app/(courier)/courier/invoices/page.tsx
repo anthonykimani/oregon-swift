@@ -212,11 +212,11 @@ export default function CourierInvoices() {
             <table className="w-full min-w-[720px]">
               <thead>
                 <tr className="border-b border-[#E0E0E0]">
-                  <th className="px-3 py-2.5 text-left text-[11px] font-manrope font-semibold text-[#333333] whitespace-nowrap">Invoice</th>
-                  <th className="px-3 py-2.5 text-left text-[11px] font-manrope font-semibold text-[#333333] whitespace-nowrap">Customer</th>
-                  <th className="px-3 py-2.5 text-left text-[11px] font-manrope font-semibold text-[#333333] whitespace-nowrap">Period</th>
-                  <th className="px-3 py-2.5 text-left text-[11px] font-manrope font-semibold text-[#333333] whitespace-nowrap">Amount</th>
-                  <th className="px-3 py-2.5 text-left text-[11px] font-manrope font-semibold text-[#333333] whitespace-nowrap">Status</th>
+                  <th className="px-3 py-2.5 text-left text-xs font-manrope font-semibold text-[#333333] whitespace-nowrap">Invoice</th>
+                  <th className="px-3 py-2.5 text-left text-xs font-manrope font-semibold text-[#333333] whitespace-nowrap">Customer</th>
+                  <th className="px-3 py-2.5 text-left text-xs font-manrope font-semibold text-[#333333] whitespace-nowrap">Period</th>
+                  <th className="px-3 py-2.5 text-left text-xs font-manrope font-semibold text-[#333333] whitespace-nowrap">Amount</th>
+                  <th className="px-3 py-2.5 text-left text-xs font-manrope font-semibold text-[#333333] whitespace-nowrap">Status</th>
                 </tr>
               </thead>
               <tbody>
@@ -253,7 +253,7 @@ export default function CourierInvoices() {
                       >
                         <td className="px-3 py-3.5 align-middle">
                           <div className="text-[13px] font-manrope font-semibold text-[#173420] whitespace-nowrap">{inv.number}</div>
-                          <div className="text-[11px] font-manrope text-[#757575] whitespace-nowrap">
+                          <div className="text-xs font-manrope text-[#757575] whitespace-nowrap">
                             {inv.myDeliveries ?? 0} delivery{(inv.myDeliveries ?? 0) !== 1 ? "s" : ""} of yours
                           </div>
                         </td>
@@ -312,7 +312,7 @@ export default function CourierInvoices() {
                 <h3 className="text-sm font-manrope font-semibold text-[#333333] mb-2">Deliveries</h3>
                 {detail.items && detail.items.length > 0 ? (
                   <div className="border border-[#E3E6ED] rounded-lg overflow-hidden">
-                    <table className="w-full text-[11px] font-manrope">
+                    <table className="w-full text-xs font-manrope">
                       <thead>
                         <tr className="bg-[#F9F9FB] text-[#333333]">
                           <th className="text-left py-2 px-3 font-semibold">Tracking</th>

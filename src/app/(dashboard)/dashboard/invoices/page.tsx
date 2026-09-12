@@ -315,11 +315,11 @@ function InvoicesContent() {
               <table className="w-full min-w-[720px]">
                 <thead>
                   <tr className="border-b border-[#E0E0E0]">
-                    <th className="px-3 py-2.5 text-left text-[11px] font-manrope font-semibold text-[#333333] whitespace-nowrap">Invoice</th>
-                    <th className="px-3 py-2.5 text-left text-[11px] font-manrope font-semibold text-[#333333] whitespace-nowrap">Issue Date</th>
-                    <th className="px-3 py-2.5 text-left text-[11px] font-manrope font-semibold text-[#333333] whitespace-nowrap">Due Date</th>
-                    <th className="px-3 py-2.5 text-left text-[11px] font-manrope font-semibold text-[#333333] whitespace-nowrap">Amount</th>
-                    <th className="px-3 py-2.5 text-left text-[11px] font-manrope font-semibold text-[#333333] whitespace-nowrap">Status</th>
+                    <th className="px-3 py-2.5 text-left text-xs font-manrope font-semibold text-[#333333] whitespace-nowrap">Invoice</th>
+                    <th className="px-3 py-2.5 text-left text-xs font-manrope font-semibold text-[#333333] whitespace-nowrap">Issue Date</th>
+                    <th className="px-3 py-2.5 text-left text-xs font-manrope font-semibold text-[#333333] whitespace-nowrap">Due Date</th>
+                    <th className="px-3 py-2.5 text-left text-xs font-manrope font-semibold text-[#333333] whitespace-nowrap">Amount</th>
+                    <th className="px-3 py-2.5 text-left text-xs font-manrope font-semibold text-[#333333] whitespace-nowrap">Status</th>
                     <th className="px-3 py-2.5"></th>
                   </tr>
                 </thead>
@@ -365,7 +365,7 @@ function InvoicesContent() {
                               {inv.number}
                             </div>
                             {inv.items && inv.items.length > 0 && (
-                              <div className="text-[11px] font-manrope text-[#757575] whitespace-nowrap">
+                              <div className="text-xs font-manrope text-[#757575] whitespace-nowrap">
                                 {inv.items.length} delivery{inv.items.length !== 1 ? "s" : ""}
                               </div>
                             )}
@@ -500,8 +500,8 @@ function InvoicesContent() {
                 <div className="grid grid-cols-2 gap-3 mt-4 bg-[#F9F9FB] rounded-lg p-3 text-xs font-manrope">
                   <div className="min-w-0">
                     <p className="text-[#8094A7] mb-0.5">Bill From</p>
-                    <p className="text-[#333333] font-medium">Oregon Courier</p>
-                    <p className="text-[#757575]">billing@oregoncourier.com</p>
+                    <p className="text-[#333333] font-medium">Oregon Swift Deliveries</p>
+                    <p className="text-[#757575]">billing@oregonswift.com</p>
                   </div>
                   <div className="min-w-0">
                     <p className="text-[#8094A7] mb-0.5">Bill To</p>
@@ -514,7 +514,7 @@ function InvoicesContent() {
                   <h3 className="text-sm font-manrope font-semibold text-[#333333] mb-2">Package Summary</h3>
                   {detail.items && detail.items.length > 0 ? (
                     <div className="border border-[#E3E6ED] rounded-lg overflow-hidden">
-                      <table className="w-full text-[11px] font-manrope">
+                      <table className="w-full text-xs font-manrope">
                         <thead>
                           <tr className="bg-[#F9F9FB] text-[#333333]">
                             <th className="text-left py-2 px-3 font-semibold">Description</th>

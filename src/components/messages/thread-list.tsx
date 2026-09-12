@@ -106,7 +106,7 @@ export function ThreadList({
                     <p className="text-sm font-manrope font-semibold text-[#161618] truncate">
                       {t.otherName ?? t.subject ?? "Conversation"}
                     </p>
-                    <span className="text-[10px] font-manrope text-[#8094A7] shrink-0">
+                    <span className="text-xs font-manrope text-[#8094A7] shrink-0">
                       {relativeTime(t.lastMessageAt)}
                     </span>
                   </div>
@@ -122,7 +122,7 @@ export function ThreadList({
                       )}
                     </p>
                     {unread && (
-                      <span className="h-[18px] min-w-[18px] px-1 flex items-center justify-center rounded-full bg-[#C0392B] text-white text-[10px] font-manrope font-bold shrink-0">
+                      <span className="h-[18px] min-w-[18px] px-1 flex items-center justify-center rounded-full bg-[#C0392B] text-white text-xs font-manrope font-bold shrink-0">
                         {t.unreadCount > 99 ? "99+" : t.unreadCount}
                       </span>
                     )}

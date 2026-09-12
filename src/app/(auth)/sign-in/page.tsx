@@ -20,7 +20,11 @@ function SignInForm() {
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
-  const [error, setError] = useState(oauthError === "OAuthCallback" ? "Connection to Google failed. Please try again." : "");
+  const [error, setError] = useState(
+    oauthError === "OAuthCallback"
+      ? "Connection to Google failed. Please try again."
+      : ""
+  );
 
   useEffect(() => {
     if (status === "authenticated" && session?.user?.role) {
@@ -61,7 +65,7 @@ function SignInForm() {
         router.push("/dashboard");
       }
     } else {
-      setError("Invalid email or password");
+      setError("Invalid email or password. Please try again.");
     }
   }
 
@@ -73,28 +77,36 @@ function SignInForm() {
   return (
     <>
       <div className="mb-8">
-        <h1 className="text-2xl font-clash-display font-semibold text-[#173420] mb-2">
+        <h1 className="text-2xl font-clash-display font-semibold text-forest mb-2">
           Welcome back
         </h1>
-        <p className="text-[#8094A7] text-sm">
-          Sign in to your Oregon Courier account
+        <p className="text-[#666D80] text-sm">
+          Sign in to your Oregon Swift Deliveries account
         </p>
       </div>
 
       {courierPending && (
-        <div className="bg-[#FEF7E0] border border-[#F3BC24]/30 rounded-xl px-4 py-3 mb-5 text-sm text-[#173420] font-inter">
-          Application submitted! An admin will review your courier account.
-          You&apos;ll be able to sign in once approved.
+        <div
+          role="status"
+          className="bg-sun-100 border border-sun-500/30 rounded-xl px-4 py-3 mb-5 text-sm text-forest"
+        >
+          Application submitted. An admin will review your courier account —
+          you&apos;ll be able to sign in once approved.
         </div>
       )}
 
       <button
         onClick={handleGoogleSignIn}
-        disabled={googleLoading}
+        disabled={googleLoading || loading}
         className="w-full h-11 flex items-center justify-center gap-3 bg-white border border-[#E3E6ED] rounded-lg text-sm text-[#333333] font-medium hover:bg-gray-50 transition-colors disabled:opacity-50"
       >
-        <svg width="20" height="20" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 0 1-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>
-        {googleLoading ? "Connecting..." : "Sign in with Google"}
+        <svg width="20" height="20" viewBox="0 0 24 24" aria-hidden>
+          <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 0 1-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z" />
+          <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" />
+          <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" />
+          <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" />
+        </svg>
+        {googleLoading ? "Connecting…" : "Sign in with Google"}
       </button>
 
       <div className="relative my-6">
@@ -102,23 +114,34 @@ function SignInForm() {
           <div className="w-full border-t border-[#E3E6ED]" />
         </div>
         <div className="relative flex justify-center text-xs">
-          <span className="bg-[#F5F4FD] px-2 text-[#8094A7]">or continue with email</span>
+          <span className="bg-[#F5F4FD] px-2 text-[#666D80]">
+            or continue with email
+          </span>
         </div>
       </div>
 
-      <form onSubmit={handleSubmit} className="space-y-5">
+      <form onSubmit={handleSubmit} className="space-y-5" aria-busy={loading}>
         {error && (
-          <div className="bg-[#FCDEE0] text-[#F04A4A] text-sm rounded-lg px-4 py-3">
+          <div
+            role="alert"
+            className="bg-[#FCDEE0] text-[#C0392B] text-sm rounded-lg px-4 py-3"
+          >
             {error}
           </div>
         )}
 
         <div>
-          <label className="block text-sm font-inter font-medium text-[#173420] mb-1.5">
+          <label
+            htmlFor="signin-email"
+            className="block text-sm font-medium text-forest mb-1.5"
+          >
             Email address
           </label>
           <Input
+            id="signin-email"
+            name="email"
             type="email"
+            autoComplete="email"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             placeholder="you@company.com"
@@ -128,12 +151,18 @@ function SignInForm() {
         </div>
 
         <div>
-          <label className="block text-sm font-inter font-medium text-[#173420] mb-1.5">
+          <label
+            htmlFor="signin-password"
+            className="block text-sm font-medium text-forest mb-1.5"
+          >
             Password
           </label>
           <div className="relative">
             <Input
+              id="signin-password"
+              name="password"
               type={showPassword ? "text" : "password"}
+              autoComplete="current-password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               placeholder="Enter your password"
@@ -143,7 +172,9 @@ function SignInForm() {
             <button
               type="button"
               onClick={() => setShowPassword(!showPassword)}
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-[#8094A7] hover:text-[#173420] transition-colors"
+              aria-label={showPassword ? "Hide password" : "Show password"}
+              aria-pressed={showPassword}
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-[#8094A7] hover:text-forest transition-colors"
             >
               {showPassword ? <EyeSlash size={18} /> : <Eye size={18} />}
             </button>
@@ -153,22 +184,37 @@ function SignInForm() {
         <Button
           type="submit"
           disabled={loading}
-          className="w-full h-11 bg-[#F3BC24] hover:bg-[#F5C94A] text-[#173420] font-semibold rounded-lg text-sm"
+          className="w-full h-11 bg-sun-500 hover:bg-sun-400 text-forest font-semibold rounded-lg text-sm"
         >
-          {loading ? "Signing in..." : "Sign In"}
+          {loading ? "Signing in…" : "Sign in"}
         </Button>
       </form>
 
       <div className="mt-6 text-center space-y-2">
-        <p className="text-sm text-[#8094A7]">
+        <p className="text-sm text-[#666D80]">
           Don&apos;t have an account?{" "}
-          <Link href="/sign-up" className="text-[#173420] font-medium hover:underline">
+          <Link
+            href="/sign-up"
+            className="text-forest font-medium hover:underline"
+          >
             Create one
           </Link>
         </p>
         <p className="text-sm">
-          <Link href="/sign-up/courier" className="text-[#F3BC24] font-medium hover:underline">
+          <Link
+            href="/sign-up/courier"
+            className="text-forest font-medium hover:underline"
+          >
             Sign up as a courier
+          </Link>
+        </p>
+        <p className="text-xs text-[#8094A7] pt-1">
+          Trouble signing in?{" "}
+          <Link
+            href="/customer-care"
+            className="text-forest font-medium hover:underline"
+          >
+            Contact support
           </Link>
         </p>
       </div>
@@ -178,7 +224,16 @@ function SignInForm() {
 
 export default function SignInPage() {
   return (
-    <Suspense fallback={null}>
+    <Suspense
+      fallback={
+        <div className="animate-pulse space-y-5" aria-hidden>
+          <div className="h-8 w-40 bg-[#E3E6ED] rounded" />
+          <div className="h-11 w-full bg-[#E3E6ED] rounded-lg" />
+          <div className="h-11 w-full bg-[#E3E6ED] rounded-lg" />
+          <div className="h-11 w-full bg-[#E3E6ED] rounded-lg" />
+        </div>
+      }
+    >
       <SignInForm />
     </Suspense>
   );

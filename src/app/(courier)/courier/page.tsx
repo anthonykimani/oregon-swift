@@ -151,10 +151,10 @@ export default function CourierHome() {
         <div className="flex items-center justify-between mb-6">
           <div>
             <p className="text-sm font-inter text-[#8094A7]">{greeting},</p>
-            <h1 className="text-2xl font-medium text-[#161618]" style={{ fontFamily: "Geist, var(--font-sans)" }}>{firstName}</h1>
+            <h1 className="text-2xl font-medium text-[#161618]">{firstName}</h1>
           </div>
           <Link href="/courier/deliveries">
-            <Button className="h-10 px-4 bg-[#F3BC24] hover:bg-[#F5C94A] rounded-[10px] text-[#173420] font-semibold text-sm gap-2 border-0" style={{ fontFamily: "Geist, var(--font-sans)" }}>
+            <Button className="h-10 px-4 bg-[#F3BC24] hover:bg-[#F5C94A] rounded-[10px] text-[#173420] font-semibold text-sm gap-2 border-0">
               <Truck size={18} weight="bold" />
               View Deliveries
             </Button>
@@ -368,10 +368,10 @@ export default function CourierHome() {
                     {activityIcons[a.status] || <Package size={18} className="text-[#8094A7]" />}
                   </div>
                   <div className="min-w-0">
-                    <p className="text-[10px] font-manrope text-[#333333] leading-[1.5]">
+                    <p className="text-xs font-manrope text-[#333333] leading-[1.5]">
                       {a.trackingNumber}{a.note ? ` — ${a.note}` : ""}
                     </p>
-                    <p className="text-[10px] font-manrope text-[#757575]">{timeAgo(a.createdAt)}</p>
+                    <p className="text-xs font-manrope text-[#757575]">{timeAgo(a.createdAt)}</p>
                   </div>
                 </div>
               ))}

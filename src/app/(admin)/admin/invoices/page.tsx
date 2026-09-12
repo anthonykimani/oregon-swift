@@ -316,13 +316,13 @@ function InvoicesContent() {
               <table className="w-full min-w-[820px]">
                 <thead>
                   <tr className="border-b border-[#E0E0E0]">
-                    <th className="px-3 py-2.5 text-left text-[11px] font-manrope font-semibold text-[#333333] whitespace-nowrap">Invoice</th>
-                    <th className="px-3 py-2.5 text-left text-[11px] font-manrope font-semibold text-[#333333] whitespace-nowrap">Customer</th>
-                    <th className="px-3 py-2.5 text-left text-[11px] font-manrope font-semibold text-[#333333] whitespace-nowrap">Period</th>
-                    <th className="px-3 py-2.5 text-left text-[11px] font-manrope font-semibold text-[#333333] whitespace-nowrap">Amount</th>
-                    <th className="px-3 py-2.5 text-left text-[11px] font-manrope font-semibold text-[#333333] whitespace-nowrap">Couriers</th>
-                    <th className="px-3 py-2.5 text-left text-[11px] font-manrope font-semibold text-[#333333] whitespace-nowrap">Status</th>
-                    <th className="px-3 py-2.5 text-left text-[11px] font-manrope font-semibold text-[#333333] whitespace-nowrap">Actions</th>
+                    <th className="px-3 py-2.5 text-left text-xs font-manrope font-semibold text-[#333333] whitespace-nowrap">Invoice</th>
+                    <th className="px-3 py-2.5 text-left text-xs font-manrope font-semibold text-[#333333] whitespace-nowrap">Customer</th>
+                    <th className="px-3 py-2.5 text-left text-xs font-manrope font-semibold text-[#333333] whitespace-nowrap">Period</th>
+                    <th className="px-3 py-2.5 text-left text-xs font-manrope font-semibold text-[#333333] whitespace-nowrap">Amount</th>
+                    <th className="px-3 py-2.5 text-left text-xs font-manrope font-semibold text-[#333333] whitespace-nowrap">Couriers</th>
+                    <th className="px-3 py-2.5 text-left text-xs font-manrope font-semibold text-[#333333] whitespace-nowrap">Status</th>
+                    <th className="px-3 py-2.5 text-left text-xs font-manrope font-semibold text-[#333333] whitespace-nowrap">Actions</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -364,7 +364,7 @@ function InvoicesContent() {
                         >
                           <td className="px-3 py-3.5 align-middle">
                             <div className="text-[13px] font-manrope font-semibold text-[#173420] whitespace-nowrap">{inv.number}</div>
-                            <div className="text-[11px] font-manrope text-[#757575] whitespace-nowrap">{inv.itemCount ?? 0} deliveries</div>
+                            <div className="text-xs font-manrope text-[#757575] whitespace-nowrap">{inv.itemCount ?? 0} deliveries</div>
                           </td>
                           <td className="px-3 py-3.5 align-middle text-xs font-manrope text-[#333333] whitespace-nowrap">
                             {inv.customerName || "—"}
@@ -508,11 +508,11 @@ function InvoicesContent() {
                             {ACTION_LABELS[ev.action] || ev.action}
                             {ev.actorName ? <span className="text-[#757575] font-normal"> · {ev.actorName}</span> : null}
                           </p>
-                          <p className="text-[11px] font-manrope text-[#8094A7]">
+                          <p className="text-xs font-manrope text-[#8094A7]">
                             {formatDateTime(ev.createdAt)}{ev.actorRole ? ` · ${ev.actorRole}` : ""}
                           </p>
                           {ev.note ? (
-                            <p className="text-[11px] font-manrope text-[#666D80] mt-0.5">{ev.note}</p>
+                            <p className="text-xs font-manrope text-[#666D80] mt-0.5">{ev.note}</p>
                           ) : null}
                         </div>
                       ))}

@@ -81,7 +81,7 @@ export default function SignUpPage() {
           Create an account
         </h1>
         <p className="text-[#8094A7] text-sm">
-          Start shipping with Oregon Courier
+          Start shipping with Oregon Swift Deliveries
         </p>
       </div>
 

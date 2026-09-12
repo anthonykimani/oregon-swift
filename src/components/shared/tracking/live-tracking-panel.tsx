@@ -61,7 +61,7 @@ function Donut({ pct, label }: { pct: number; label: string }) {
       </svg>
       <div className="absolute inset-0 flex flex-col items-center justify-center">
         <span className="text-sm font-manrope font-semibold text-[#052D50]">{filled}%</span>
-        <span className="text-[8px] font-manrope text-[#8094A7] leading-none">{label}</span>
+        <span className="text-[11px] font-manrope text-[#8094A7] leading-none">{label}</span>
       </div>
     </div>
   );
@@ -70,12 +70,12 @@ function Donut({ pct, label }: { pct: number; label: string }) {
 function Step({ label, name, time, dot }: { label: string; name: string; time: string; dot: string }) {
   return (
     <div className="flex flex-col items-center text-center min-w-0">
-      <span className="text-[9px] font-manrope uppercase tracking-wide text-[#A4ACB9] mb-1">{label}</span>
+      <span className="text-xs font-manrope uppercase tracking-wide text-[#A4ACB9] mb-1">{label}</span>
       <span className={`w-2.5 h-2.5 rounded-full mb-1.5 ${dot}`} />
-      <span className="text-[11px] font-manrope text-[#333] font-medium leading-tight line-clamp-2">
+      <span className="text-xs font-manrope text-[#333] font-medium leading-tight line-clamp-2">
         {name}
       </span>
-      <span className="text-[9px] font-manrope text-[#8094A7] mt-0.5">{time}</span>
+      <span className="text-xs font-manrope text-[#8094A7] mt-0.5">{time}</span>
     </div>
   );
 }
@@ -146,14 +146,14 @@ export function LiveTrackingPanel({
       {showHeader && (
         <div className="flex items-center justify-between gap-3 mb-4">
           <div className="min-w-0">
-            <div className="text-[10px] font-manrope text-[#8094A7]">Tracking ID</div>
+            <div className="text-xs font-manrope text-[#8094A7]">Tracking ID</div>
             <div className="text-sm font-manrope font-semibold text-[#052D50] truncate">
               #{shipment.trackingNumber}
             </div>
           </div>
           <div className="flex flex-col items-end gap-1">
             <StatusBadge label={statusLabels[shipment.status] || shipment.status} status={statusVariants[shipment.status] || "pending"} />
-            <span className="text-[10px] font-manrope text-[#8094A7]">
+            <span className="text-xs font-manrope text-[#8094A7]">
               {shipment.courierName ? `${shipment.courierName} · ` : ""}
               {shipment.priceCents != null ? `$${(shipment.priceCents / 100).toFixed(2)}` : ""}
             </span>
@@ -164,7 +164,7 @@ export function LiveTrackingPanel({
       {/* Live courier ETA strip */}
       {liveLocation && (
         <div className="flex items-center justify-between gap-3 mb-4 px-3 py-2 bg-[#EFFEFA] border border-[#D9F9E7] rounded-lg">
-          <div className="flex items-center gap-1.5 text-[11px] font-manrope text-[#12806B] min-w-0">
+          <div className="flex items-center gap-1.5 text-xs font-manrope text-[#12806B] min-w-0">
             <Broadcast size={14} />
             <span className="font-semibold whitespace-nowrap">Live courier</span>
             {availabilityStatus && (
@@ -179,7 +179,7 @@ export function LiveTrackingPanel({
             )}
             {lastSeen && <span className="text-[#8094A7] truncate">· {lastSeen}</span>}
           </div>
-          <div className="text-[11px] font-manrope text-[#333] whitespace-nowrap">
+          <div className="text-xs font-manrope text-[#333] whitespace-nowrap">
             {etaDistanceMiles != null && (
               <span>{formatDistance(etaDistanceMiles)} away</span>
             )}
@@ -211,7 +211,7 @@ export function LiveTrackingPanel({
               </span>
               <span className="w-6 border-t border-dashed border-[#40C4AA]" />
             </div>
-            <span className="text-[9px] font-manrope text-[#8094A7] mt-0.5 whitespace-nowrap">
+            <span className="text-xs font-manrope text-[#8094A7] mt-0.5 whitespace-nowrap">
               {distance != null ? formatDistance(distance) : "—"}
               {estDuration != null ? ` · ${formatDurationHours(estDuration)}` : ""}
             </span>
@@ -232,12 +232,12 @@ export function LiveTrackingPanel({
       <div className="border-t border-[#EDEDED] pt-3">
         <div className="flex items-center justify-between mb-2">
           <h4 className="text-xs font-manrope text-[#333]">Shipment Manifest</h4>
-          <span className="text-[10px] font-manrope text-[#8094A7]">
+          <span className="text-xs font-manrope text-[#8094A7]">
             {shipment.packagePieces} piece{shipment.packagePieces > 1 ? "s" : ""}
           </span>
         </div>
         {hasPackage ? (
-          <table className="w-full text-[10px] font-manrope">
+          <table className="w-full text-xs font-manrope">
             <thead>
               <tr className="bg-[#FCF2F2]">
                 <th className="py-1.5 px-2 rounded-l font-semibold text-[#333] text-left">No</th>
@@ -260,7 +260,7 @@ export function LiveTrackingPanel({
             </tbody>
           </table>
         ) : (
-          <div className="text-[11px] font-manrope text-[#8094A7] py-2">No package details</div>
+          <div className="text-xs font-manrope text-[#8094A7] py-2">No package details</div>
         )}
       </div>
     </section>

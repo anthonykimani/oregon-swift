@@ -28,10 +28,10 @@ export function ActivityItem({
         <Icon size={18} />
       </div>
       <div className="flex-1 min-w-0">
-        <p className="text-[10px] font-manrope leading-relaxed text-[#333333]">
+        <p className="text-xs font-manrope leading-relaxed text-[#333333]">
           {text}
         </p>
-        <span className="text-[10px] text-[#757575] font-manrope mt-0.5 block">
+        <span className="text-xs text-[#757575] font-manrope mt-0.5 block">
           {time}
         </span>
       </div>

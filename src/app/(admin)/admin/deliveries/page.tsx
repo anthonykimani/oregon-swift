@@ -344,7 +344,7 @@ function AdminDeliveriesContent() {
               onChange={(e) => setSearch(e.target.value)}
               className="w-full h-[38px] pl-9 pr-20 bg-white border border-[#E3E6ED] rounded-lg text-sm text-[#333333] placeholder:text-[#45617D] focus:outline-none focus:border-[#052D50]"
             />
-            <span className="absolute right-2 top-1/2 -translate-y-1/2 h-6 px-2 flex items-center bg-[#F4F7FD] rounded text-[11px] font-manrope text-[#45617D]">
+            <span className="absolute right-2 top-1/2 -translate-y-1/2 h-6 px-2 flex items-center bg-[#F4F7FD] rounded text-xs font-manrope text-[#45617D]">
               ⌘K
             </span>
           </div>

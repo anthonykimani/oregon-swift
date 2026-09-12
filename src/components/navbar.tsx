@@ -15,10 +15,10 @@ export default function Navbar() {
   const [mobileOpen, setMobileOpen] = useState(false);
 
   return (
-    <nav className="relative flex items-center justify-between px-6 lg:px-10 xl:px-24 py-3 bg-[#fcfcfc] z-50">
-      <Link href="/" className="font-aboreto text-sm md:text-lg xl:text-xl text-brand truncate min-w-0 flex-1 lg:flex-none hover:opacity-80 transition-opacity">Oregon Swift Deliveries LLC</Link>
+    <nav className="relative flex items-center justify-between gap-4 px-6 lg:px-10 xl:px-16 py-3 bg-[#fcfcfc] z-50 min-w-0 overflow-x-clip">
+      <Link href="/" className="font-aboreto text-sm md:text-lg xl:text-xl text-brand truncate min-w-0 flex-1 hover:opacity-80 transition-opacity">Oregon Swift Deliveries LLC</Link>
 
-      <div className="hidden lg:flex items-center gap-6 xl:gap-8">
+      <div className="hidden xl:flex items-center gap-6 xl:gap-8 shrink-0">
         <Link href="/" className="font-dm-sans text-sm xl:text-base text-foreground hover:text-brand transition-colors whitespace-nowrap">
           Home
         </Link>
@@ -36,8 +36,8 @@ export default function Navbar() {
         </Link>
       </div>
 
-      <div className="hidden lg:flex items-center gap-2 xl:gap-3">
-        <div className="hidden xl:flex items-center gap-1 mr-2 xl:mr-4">
+      <div className="hidden xl:flex items-center gap-2 xl:gap-3 shrink-0">
+        <div className="hidden 2xl:flex items-center gap-1 mr-2 2xl:mr-4">
           <Globe size={14} className="text-foreground shrink-0" />
           <span className="font-dm-sans text-sm text-foreground whitespace-nowrap">United States</span>
           <CaretDown size={10} className="text-foreground shrink-0" weight="bold" />
@@ -51,15 +51,16 @@ export default function Navbar() {
       </div>
 
       <button
-        className="flex lg:hidden size-8 items-center justify-center text-foreground"
+        className="flex xl:hidden size-8 shrink-0 items-center justify-center text-foreground"
         onClick={() => setMobileOpen(!mobileOpen)}
         aria-label="Toggle menu"
+        aria-expanded={mobileOpen}
       >
         {mobileOpen ? <X size={24} /> : <List size={24} />}
       </button>
 
       {mobileOpen && (
-        <div className="absolute top-full left-0 w-full bg-[#fcfcfc] border-t border-foreground/5 px-6 py-6 flex flex-col gap-4 lg:hidden shadow-lg">
+        <div className="absolute top-full left-0 w-full bg-[#fcfcfc] border-t border-foreground/5 px-6 py-6 flex flex-col gap-4 xl:hidden shadow-lg">
           <Link href="/" className="font-dm-sans text-base text-foreground">
             Home
           </Link>

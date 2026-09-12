@@ -105,12 +105,38 @@
   --color-info-foreground: hsl(var(--info-foreground));
   --color-brand: hsl(var(--primary));
   --color-brand-light: 139 39% 95%;
-  --font-sans: var(--font-dm-sans);
-  --font-aboreto: var(--font-aboreto);
-  --font-inter: var(--font-inter);
-  --font-manrope: var(--font-manrope);
-  --font-outfit: var(--font-outfit);
-  --font-urbanist: var(--font-urbanist);
+
+  /* Oregon Courier brand palette — mirrors docs/design-system.md.
+     Forest green is the system/structural color; sun yellow is reserved for
+     primary action or urgency and must always pair with dark text. */
+  --color-forest: #173420;
+  --color-forest-800: #1f4228;
+  --color-forest-700: #2d5a3a;
+  --color-forest-600: #3d724d;
+  --color-forest-200: #dce8d6;
+  --color-forest-100: #edf2ea;
+  --color-forest-50: #f4f8f2;
+  --color-sun-500: #f3bc24;
+  --color-sun-400: #f5c94a;
+  --color-sun-300: #f8d776;
+  --color-sun-100: #fef7e0;
+  --color-sun-50: #fffbee;
+
+  /* Type roles: Clash Display is the restrained marketing headline face.
+     Manrope is the single application/body family. `--font-manrope-source`
+     is the one real source variable, supplied by next/font on <html>.
+     Legacy font-class names (font-inter, font-dm-sans, font-outfit,
+     font-urbanist, font-inter-tight) alias the source directly so existing
+     screens stay coherent without a screen-by-screen rewrite, and no token
+     ever references itself. */
+  --font-sans: var(--font-manrope-source);
+  --font-aboreto: "Clash Display", sans-serif;
+  --font-inter: var(--font-manrope-source);
+  --font-inter-tight: var(--font-manrope-source);
+  --font-manrope: var(--font-manrope-source);
+  --font-outfit: var(--font-manrope-source);
+  --font-urbanist: var(--font-manrope-source);
+  --font-dm-sans: var(--font-manrope-source);
   --font-clash-display: "Clash Display", sans-serif;
   --animate-accordion-down: accordion-down 0.2s ease-out;
   --animate-accordion-up: accordion-up 0.2s ease-out;
@@ -139,7 +165,11 @@
     @apply border-border;
   }
   body {
-    @apply bg-background text-foreground;
-    font-family: var(--font-sans);
+    @apply bg-background text-foreground font-sans;
+  }
+  /* One keyboard focus treatment for the whole product. */
+  :focus-visible {
+    outline: 2px solid #173420;
+    outline-offset: 2px;
   }
 }

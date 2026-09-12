@@ -63,7 +63,7 @@ export function VehicleInfoPanel({ shipment }: { shipment: TrackingShipment | nu
           <Truck size={20} />
         </div>
         <div className="min-w-0">
-          <div className="text-[10px] font-manrope text-[#8094A7]">Vehicle</div>
+          <div className="text-xs font-manrope text-[#8094A7]">Vehicle</div>
           <div className="text-sm font-manrope text-[#333] truncate">
             {shipment.courierVehicle || "—"}
           </div>
@@ -77,12 +77,12 @@ export function VehicleInfoPanel({ shipment }: { shipment: TrackingShipment | nu
             {(shipment.courierName || "?").slice(0, 2).toUpperCase()}
           </div>
           <div className="min-w-0 flex-1">
-            <div className="text-[10px] font-manrope text-[#8094A7]">Courier</div>
+            <div className="text-xs font-manrope text-[#8094A7]">Courier</div>
             <div className="text-sm font-manrope text-[#333] truncate">
               {shipment.courierName || "Unassigned"}
             </div>
             {shipment.courierPhone && (
-              <div className="text-[11px] font-manrope text-[#8094A7] truncate">
+              <div className="text-xs font-manrope text-[#8094A7] truncate">
                 {shipment.courierPhone}
               </div>
             )}
@@ -123,7 +123,7 @@ export function VehicleInfoPanel({ shipment }: { shipment: TrackingShipment | nu
         <div className="flex items-center gap-3">
           <UserCircle size={20} className="text-[#45617D] shrink-0" />
           <div className="min-w-0">
-            <div className="text-[10px] font-manrope text-[#8094A7]">Customer</div>
+            <div className="text-xs font-manrope text-[#8094A7]">Customer</div>
             <div className="text-xs font-manrope text-[#333] truncate">
               {shipment.customerName || "—"}
             </div>

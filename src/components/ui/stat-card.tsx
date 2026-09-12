@@ -39,7 +39,7 @@ export function StatCard({
         </div>
         <div className="flex items-center gap-2">
           {change && (
-            <span className="text-xs font-inter-tight font-semibold bg-[#FEF7E0] text-[#F3BC24] rounded-full px-2 py-0.5 leading-none">
+            <span className="text-xs font-manrope font-semibold bg-[#FEF7E0] text-[#8A5A00] rounded-full px-2 py-0.5 leading-none">
               {change}
             </span>
           )}

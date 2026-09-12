@@ -58,7 +58,7 @@ const seeded = entries.map(([status, count]) => {
       </div>
 
       <div className="flex items-end justify-between mb-2">
-        <span className="text-[11px] font-manrope text-[#757575]">
+        <span className="text-xs font-manrope text-[#757575]">
           Total Shipments
         </span>
         <span className="text-2xl font-manrope font-semibold text-[#333333]">

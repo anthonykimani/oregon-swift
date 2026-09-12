@@ -145,7 +145,7 @@ export function NewThreadDialog({
                         selected?.id === r.id ? "bg-[#EFFEFA]" : "hover:bg-[#F9F9FB]"
                       }`}
                     >
-                      <span className="h-8 w-8 rounded-full bg-[#F0F0F0] flex items-center justify-center text-[11px] font-semibold font-manrope text-[#333333] shrink-0">
+                      <span className="h-8 w-8 rounded-full bg-[#F0F0F0] flex items-center justify-center text-xs font-semibold font-manrope text-[#333333] shrink-0">
                         {r.name
                           .split(" ")
                           .map((p) => p[0])
@@ -155,7 +155,7 @@ export function NewThreadDialog({
                       </span>
                       <span className="min-w-0">
                         <span className="block text-sm font-manrope text-[#161618] truncate">{r.name}</span>
-                        <span className="block text-[11px] font-manrope text-[#8094A7] capitalize">{r.role}</span>
+                        <span className="block text-xs font-manrope text-[#8094A7] capitalize">{r.role}</span>
                       </span>
                     </button>
                   ))

@@ -252,7 +252,7 @@ export function DeliveryTrackingCard({
         {!loading && data && (
           <>
             <div className="absolute left-2 top-2 right-2 flex items-center gap-1 pointer-events-none z-[1000]">
-              <div className="flex-1 bg-white/95 backdrop-blur rounded-md px-3 py-1.5 text-[11px] font-manrope text-[#757575] shadow-sm truncate">
+              <div className="flex-1 bg-white/95 backdrop-blur rounded-md px-3 py-1.5 text-xs font-manrope text-[#757575] shadow-sm truncate">
                 {data.trackingNumber}
               </div>
               <button
@@ -265,7 +265,7 @@ export function DeliveryTrackingCard({
             </div>
 
             {geocoding && (
-              <div className="absolute bottom-2 left-2 z-[1000] bg-white/95 backdrop-blur rounded-md px-2.5 py-1 text-[10px] font-manrope text-[#757575] shadow-sm">
+              <div className="absolute bottom-2 left-2 z-[1000] bg-white/95 backdrop-blur rounded-md px-2.5 py-1 text-xs font-manrope text-[#757575] shadow-sm">
                 Locating pickup &amp; dropoff…
               </div>
             )}
@@ -291,7 +291,7 @@ export function DeliveryTrackingCard({
           <>
       <div className="flex items-center justify-between mb-3">
         <div>
-          <div className="text-[10px] font-manrope text-[#757575]">Tracking ID</div>
+          <div className="text-xs font-manrope text-[#757575]">Tracking ID</div>
           <div className="text-sm font-manrope text-[#333333]">
             #{data.trackingNumber || "—"}
           </div>
@@ -303,21 +303,21 @@ export function DeliveryTrackingCard({
 
       <div className="flex items-center gap-2 mb-3">
         <div className="flex-1 min-w-0">
-          <div className="text-[10px] font-manrope text-[#757575]">Departure</div>
-          <div className="text-[11px] font-manrope text-[#333333] truncate">
+          <div className="text-xs font-manrope text-[#757575]">Departure</div>
+          <div className="text-xs font-manrope text-[#333333] truncate">
             {data.pickupAddress || "—"}
           </div>
-          <div className="text-[10px] font-manrope text-[#757575]">
+          <div className="text-xs font-manrope text-[#757575]">
             {formatDate(data.pickupDate)} {formatTime(data.pickupDate)}
           </div>
         </div>
         <ArrowRight size={18} className="text-[#333333] shrink-0" />
         <div className="flex-1 min-w-0 text-right">
-          <div className="text-[10px] font-manrope text-[#757575]">Destination</div>
-          <div className="text-[11px] font-manrope text-[#333333] truncate">
+          <div className="text-xs font-manrope text-[#757575]">Destination</div>
+          <div className="text-xs font-manrope text-[#333333] truncate">
             {data.dropoffAddress || "—"}
           </div>
-          <div className="text-[10px] font-manrope text-[#757575]">
+          <div className="text-xs font-manrope text-[#757575]">
             {formatDate(data.dropoffDate) || "est."}
           </div>
         </div>
@@ -329,7 +329,7 @@ export function DeliveryTrackingCard({
             {(data.courierName || "?").slice(0, 2).toUpperCase()}
           </div>
           <div>
-            <div className="text-[10px] font-manrope text-[#757575]">Courier</div>
+            <div className="text-xs font-manrope text-[#757575]">Courier</div>
             <div className="text-xs font-manrope text-[#333333]">
               {data.courierName || "Unassigned"}
             </div>
@@ -351,7 +351,7 @@ export function DeliveryTrackingCard({
         </h4>
         <div className="space-y-0">
           {timeline.length === 0 ? (
-            <div className="text-[11px] font-manrope text-[#8094A7]">
+            <div className="text-xs font-manrope text-[#8094A7]">
               No events yet
             </div>
           ) : (
@@ -371,7 +371,7 @@ export function DeliveryTrackingCard({
                       </span>
                     )}
                   </div>
-                  <div className="text-[10px] font-manrope text-[#757575]">
+                  <div className="text-xs font-manrope text-[#757575]">
                     {formatTime(s.createdAt)} {formatDate(s.createdAt)}
                   </div>
                 </div>

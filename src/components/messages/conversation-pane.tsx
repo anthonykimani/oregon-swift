@@ -176,7 +176,7 @@ export function ConversationPane({
         </div>
         <div className="min-w-0">
           <p className="text-sm font-manrope font-semibold text-[#161618] truncate">{otherName}</p>
-          <p className="text-[11px] font-manrope text-[#8094A7] flex items-center gap-1">
+          <p className="text-xs font-manrope text-[#8094A7] flex items-center gap-1">
             {detail?.conversation?.deliveryId ? (
               <>
                 <Package size={11} /> Delivery thread
@@ -216,7 +216,7 @@ export function ConversationPane({
                 <div key={m.id}>
                   {showDate && (
                     <div className="flex justify-center my-3">
-                      <span className="text-[10px] font-manrope text-[#8094A7] bg-white border border-[#E3E6ED] rounded-full px-2.5 py-0.5">
+                      <span className="text-xs font-manrope text-[#8094A7] bg-white border border-[#E3E6ED] rounded-full px-2.5 py-0.5">
                         {formatDateKey(m.createdAt)}
                       </span>
                     </div>
@@ -224,7 +224,7 @@ export function ConversationPane({
                   <div className={`flex ${mine ? "justify-end" : "justify-start"} mb-1.5`}>
                     <div className={`max-w-[75%] rounded-2xl px-3.5 py-2.5 ${mine ? "bg-[#173420] text-white" : "bg-white border border-[#E3E6ED] text-[#333333]"}`}>
                       <p className="text-sm font-manrope whitespace-pre-wrap break-words">{m.body}</p>
-                      <p className={`text-[10px] font-manrope mt-1 ${mine ? "text-[#A8CDB4]" : "text-[#8094A7]"}`}>
+                      <p className={`text-xs font-manrope mt-1 ${mine ? "text-[#A8CDB4]" : "text-[#8094A7]"}`}>
                         {formatTime(m.createdAt)}
                       </p>
                     </div>

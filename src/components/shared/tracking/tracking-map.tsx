@@ -221,7 +221,7 @@ export function TrackingMap({
       {/* Top overlay: tracking id + status */}
       {trackingNumber && (
         <div className="absolute left-3 top-3 z-[1000] flex items-center gap-2 pointer-events-none">
-          <div className="bg-white/95 backdrop-blur rounded-md px-3 py-1.5 text-[11px] font-manrope text-[#333] shadow-sm">
+          <div className="bg-white/95 backdrop-blur rounded-md px-3 py-1.5 text-xs font-manrope text-[#333] shadow-sm">
             #{trackingNumber}
           </div>
           <StatusBadge
@@ -232,13 +232,13 @@ export function TrackingMap({
       )}
 
       {geocoding && (
-        <div className="absolute bottom-3 left-3 z-[1000] bg-white/95 backdrop-blur rounded-md px-2.5 py-1 text-[10px] font-manrope text-[#8094A7] shadow-sm">
+        <div className="absolute bottom-3 left-3 z-[1000] bg-white/95 backdrop-blur rounded-md px-2.5 py-1 text-xs font-manrope text-[#8094A7] shadow-sm">
           Locating pickup &amp; dropoff…
         </div>
       )}
 
       {geocodeFailed && (
-        <div className="absolute bottom-3 left-3 z-[1000] bg-[#FDF3F4] border border-[#F5CED2] rounded-md px-2.5 py-1 text-[10px] font-manrope text-[#C0392B] shadow-sm">
+        <div className="absolute bottom-3 left-3 z-[1000] bg-[#FDF3F4] border border-[#F5CED2] rounded-md px-2.5 py-1 text-xs font-manrope text-[#C0392B] shadow-sm">
           Live location unavailable
         </div>
       )}

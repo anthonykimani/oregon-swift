@@ -223,7 +223,7 @@ export function ShipmentList({
               >
                 {t.label}
                 <span
-                  className={`px-1.5 rounded-full text-[10px] ${
+                  className={`px-1.5 rounded-full text-xs ${
                     active ? "bg-white/20 text-white" : "bg-white text-[#8094A7]"
                   }`}
                 >
@@ -246,7 +246,7 @@ export function ShipmentList({
             {search || activeTab !== "all" || thisMonth ? "No shipments match your filters" : "No shipments yet"}
           </div>
         ) : (
-          <table className="w-full min-w-[920px] text-[10px] font-manrope">
+          <table className="w-full min-w-[920px] text-xs font-manrope">
             <thead>
               <tr className="bg-[#FCF2F2]">
                 <th className="text-left text-[#333] font-semibold py-2.5 px-3">Shipping ID</th>
@@ -292,7 +292,7 @@ export function ShipmentList({
                             style={{ width: `${pct}%` }}
                           />
                         </div>
-                        <span className="text-[9px] text-[#8094A7] font-medium">{pct}%</span>
+                        <span className="text-xs text-[#8094A7] font-medium">{pct}%</span>
                       </div>
                     </td>
                     <td className="py-3 px-3">

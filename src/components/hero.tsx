@@ -1,38 +1,46 @@
+import Image from "next/image";
+import Link from "next/link";
+
 export default function Hero() {
   return (
-    <section className="relative min-h-[600px] md:min-h-[770px] flex items-center overflow-hidden bg-center md:bg-right"
-      style={{
-        backgroundImage: 'url("/images/hero-bg.jpg")',
-        backgroundSize: "cover",
-      }}
-    >
-      <div className="absolute inset-0 bg-gradient-to-r from-white via-white/80 to-transparent md:via-white/60" />
-      <div className="relative w-full px-6 lg:px-10 xl:px-24 py-16 md:py-24">
-        <div className="max-w-[750px]">
-          <h1 className="font-clash-display text-4xl md:text-6xl leading-tight text-brand">
-            Reliable Last Mile Delivery
-            <br />
-            Across the Pacific Northwest
-          </h1>
-          <p
-            className="font-manrope text-base md:text-xl leading-relaxed mt-8 md:mt-7 max-w-[546px]"
-            style={{ color: "#1b191a" }}
-          >
-            Portland-based logistics and last-mile delivery specializing in time-sensitive transportation solutions.
+    <section className="relative isolate flex items-center overflow-hidden bg-forest min-h-[600px] md:min-h-[740px]">
+      <Image
+        src="/images/hero-bg.jpg"
+        alt=""
+        fill
+        priority
+        sizes="100vw"
+        className="object-cover object-[68%_center] md:object-right"
+      />
+      {/* Overlay keeps the headline at AA contrast while letting the
+          photograph carry the right-hand side of the frame. */}
+      <div className="absolute inset-0 bg-gradient-to-r from-white via-white/90 to-white/40 md:via-white/75 md:to-transparent" />
+
+      <div className="relative z-10 w-full px-6 lg:px-10 xl:px-24 py-20 md:py-28">
+        <div className="max-w-[640px]">
+          <p className="font-manrope text-xs sm:text-sm font-medium uppercase tracking-[0.18em] text-forest-700">
+            Portland-based last-mile logistics
           </p>
-          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 sm:gap-4 mt-10 md:mt-12">
-            <a
-              href="/sign-up"
-              className="font-inter text-xs bg-brand text-white px-5 py-2.5 rounded-xl shrink-0 text-nowrap hover:opacity-90 transition-opacity"
+          <h1 className="font-clash-display text-4xl sm:text-5xl md:text-[64px] leading-[1.04] tracking-tight text-forest mt-4 text-balance">
+            Reliable last-mile delivery across the Pacific Northwest
+          </h1>
+          <p className="font-manrope text-base md:text-lg leading-relaxed mt-6 max-w-[54ch] text-[#1b191a]">
+            Time-sensitive courier, freight, and same-day delivery — routed,
+            tracked, and dispatched by a team that knows the region.
+          </p>
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 sm:gap-4 mt-8 md:mt-10">
+            <Link
+              href="/get-a-quote"
+              className="inline-flex justify-center items-center rounded-xl bg-sun-500 hover:bg-sun-400 text-forest font-manrope text-sm font-semibold px-6 h-12 transition-colors"
             >
-              Get A Quote
-            </a>
-            <a
-              href="/sign-in"
-              className="font-inter text-xs text-brand bg-white border border-[#e5e5e5] px-5 py-2.5 rounded-xl shrink-0 text-nowrap hover:border-brand transition-colors"
+              Get a quote
+            </Link>
+            <Link
+              href="/tracking"
+              className="inline-flex justify-center items-center rounded-xl bg-white text-forest font-manrope text-sm font-semibold px-6 h-12 border border-[#e5e5e5] hover:border-forest transition-colors"
             >
-              Request Dispatch
-            </a>
+              Track a delivery
+            </Link>
           </div>
         </div>
       </div>

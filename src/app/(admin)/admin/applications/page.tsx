@@ -144,7 +144,7 @@ export default function ApplicationsPage() {
             </div>
           ) : (
             <div className="flex-1 overflow-auto">
-              <table className="w-full text-[10px] font-manrope">
+              <table className="w-full text-xs font-manrope">
                 <thead>
                   <tr className="bg-[#DCE8D6] rounded-lg">
                     <th className="text-left text-[#333333] font-medium py-3 px-2">

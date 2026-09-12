@@ -244,7 +244,7 @@ function CourierDeliveriesContent() {
                   </button>
 
                   <div className="flex items-center gap-1.5">
-                    <span className="text-[11px] font-manrope text-[#6E6F78]">Sort by:</span>
+                    <span className="text-xs font-manrope text-[#6E6F78]">Sort by:</span>
                     <div className="relative">
                       <button
                         type="button"
@@ -297,7 +297,7 @@ function CourierDeliveriesContent() {
                       {HEADERS.map((h) => (
                         <th
                           key={h}
-                          className="px-3 py-2.5 text-left text-[11px] font-manrope font-semibold text-[#333333] whitespace-nowrap"
+                          className="px-3 py-2.5 text-left text-xs font-manrope font-semibold text-[#333333] whitespace-nowrap"
                         >
                           <span className="inline-flex items-center gap-1">
                             {h}
@@ -332,7 +332,7 @@ function CourierDeliveriesContent() {
                                   {d.trackingNumber}
                                 </div>
                                 {d.packageDesc && (
-                                  <div className="text-[11px] font-manrope text-[#757575] truncate max-w-[170px] mt-0.5">
+                                  <div className="text-xs font-manrope text-[#757575] truncate max-w-[170px] mt-0.5">
                                     {d.packageDesc}
                                   </div>
                                 )}
@@ -370,7 +370,7 @@ function CourierDeliveriesContent() {
                                 <div className="w-[70px] h-1.5 bg-[#F0F0F0] rounded-full overflow-hidden">
                                   <div className="h-full bg-[#40C4AA] rounded-full" style={{ width: `${pct}%` }} />
                                 </div>
-                                <span className="text-[11px] font-manrope text-[#333333] whitespace-nowrap">{pct}%</span>
+                                <span className="text-xs font-manrope text-[#333333] whitespace-nowrap">{pct}%</span>
                               </div>
                             </td>
                             <td className="px-3 py-3.5 align-middle">

@@ -37,7 +37,7 @@ export function AvgDeliveryTimeChart({ data }: { data: StatPoint[] }) {
     <section className="bg-white border border-[#E3E6ED] rounded-lg p-5 flex flex-col min-w-0">
       <div className="flex items-center justify-between gap-3 mb-4">
         <h3 className="text-sm font-manrope text-[#295279]">Average Delivery Time</h3>
-        <span className="inline-flex items-center gap-1 text-[10px] font-inter font-semibold bg-[#EFFEFA] text-[#40C4AA] rounded-full px-2 py-0.5">
+        <span className="inline-flex items-center gap-1 text-xs font-inter font-semibold bg-[#EFFEFA] text-[#40C4AA] rounded-full px-2 py-0.5">
           <Clock size={12} /> days
         </span>
       </div>
@@ -54,7 +54,7 @@ export function AvgDeliveryTimeChart({ data }: { data: StatPoint[] }) {
       </div>
 
       <div className="flex gap-3 flex-1">
-        <div className="flex flex-col justify-between text-[10px] font-manrope text-[#8094A7] py-0.5">
+        <div className="flex flex-col justify-between text-xs font-manrope text-[#8094A7] py-0.5">
           <span>{Math.round(maxDays)}</span>
           <span>{Math.round(maxDays / 2)}</span>
           <span>0</span>
@@ -77,7 +77,7 @@ export function AvgDeliveryTimeChart({ data }: { data: StatPoint[] }) {
           </div>
           <div className="flex gap-[6px] mt-2">
             {items.map((m) => (
-              <span key={m.month} className="flex-1 text-center text-[9px] font-manrope text-[#8094A7] truncate">
+              <span key={m.month} className="flex-1 text-center text-xs font-manrope text-[#8094A7] truncate">
                 {m.month}
               </span>
             ))}
@@ -105,7 +105,7 @@ export function BusyPeriodsHeatmap({
     <section className="bg-white border border-[#E3E6ED] rounded-lg p-5 flex flex-col min-w-0">
       <div className="flex items-center justify-between gap-3 mb-4">
         <h3 className="text-sm font-manrope text-[#295279]">Busy Periods</h3>
-        <span className="inline-flex items-center gap-1 text-[10px] font-inter font-semibold bg-[#EFFEFA] text-[#40C4AA] rounded-full px-2 py-0.5">
+        <span className="inline-flex items-center gap-1 text-xs font-inter font-semibold bg-[#EFFEFA] text-[#40C4AA] rounded-full px-2 py-0.5">
           <ChartBar size={12} /> deliveries / hour
         </span>
       </div>
@@ -114,7 +114,7 @@ export function BusyPeriodsHeatmap({
         <div className="flex flex-col mr-2 shrink-0">
           <div className="h-6" />
           {rows.map((r) => (
-            <div key={r.label} className="h-6 flex items-center justify-end pr-2 text-[10px] font-manrope text-[#8094A7]">
+            <div key={r.label} className="h-6 flex items-center justify-end pr-2 text-xs font-manrope text-[#8094A7]">
               {r.label}
             </div>
           ))}
@@ -122,7 +122,7 @@ export function BusyPeriodsHeatmap({
         <div className="flex-1 min-w-0">
           <div className="grid mb-1" style={{ gridTemplateColumns: `repeat(${hourLabels.length}, minmax(0,1fr))` }}>
             {hourLabels.map((l, i) => (
-              <div key={l} className={`text-center text-[9px] font-manrope text-[#8094A7] ${i % 2 === 0 ? "" : "opacity-0"}`}>
+              <div key={l} className={`text-center text-xs font-manrope text-[#8094A7] ${i % 2 === 0 ? "" : "opacity-0"}`}>
                 {l}
               </div>
             ))}
@@ -143,13 +143,13 @@ export function BusyPeriodsHeatmap({
       </div>
 
       <div className="flex items-center justify-end gap-2 mt-3">
-        <span className="text-[9px] font-manrope text-[#8094A7]">Low</span>
+        <span className="text-xs font-manrope text-[#8094A7]">Low</span>
         <div className="flex">
           {[0, 0.25, 0.5, 0.75, 1].map((t) => (
             <div key={t} className="w-4 h-3" style={{ backgroundColor: heatColor(t) }} />
           ))}
         </div>
-        <span className="text-[9px] font-manrope text-[#8094A7]">High</span>
+        <span className="text-xs font-manrope text-[#8094A7]">High</span>
       </div>
     </section>
   );

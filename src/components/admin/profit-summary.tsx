@@ -62,14 +62,14 @@ export function ProfitSummary({ data }: { data: MonthlyPoint[] }) {
             <span className="text-2xl font-manrope font-semibold text-[#333333]">
               {formatCents(totalRevenueCents)}
             </span>
-            <span className="inline-flex items-center gap-1 text-[10px] font-manrope font-semibold bg-[#D9F9E7] text-[#007837] rounded-full px-2 py-0.5">
+            <span className="inline-flex items-center gap-1 text-xs font-manrope font-semibold bg-[#D9F9E7] text-[#007837] rounded-full px-2 py-0.5">
               <TrendUp size={12} weight="bold" />
               {change > 0 ? "+" : ""}{change.toFixed(2)}%
             </span>
           </div>
         </div>
 
-        <div className="flex items-center gap-4 text-[10px] font-manrope text-[#757575]">
+        <div className="flex items-center gap-4 text-xs font-manrope text-[#757575]">
           <span className="flex items-center gap-1.5">
             <span
               className="w-2 h-2 rounded-full"
@@ -88,7 +88,7 @@ export function ProfitSummary({ data }: { data: MonthlyPoint[] }) {
       </div>
 
       <div className="flex gap-3">
-        <div className="flex flex-col justify-between text-[10px] font-manrope text-[#757575] py-0.5">
+        <div className="flex flex-col justify-between text-xs font-manrope text-[#757575] py-0.5">
           <span>$100K</span>
           <span>$75K</span>
           <span>$50K</span>
@@ -130,7 +130,7 @@ export function ProfitSummary({ data }: { data: MonthlyPoint[] }) {
             {items.map((m) => (
               <span
                 key={m.month}
-                className="flex-1 text-center text-[10px] font-manrope text-[#757575]"
+                className="flex-1 text-center text-xs font-manrope text-[#757575]"
               >
                 {m.month}
               </span>

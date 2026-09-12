@@ -110,7 +110,7 @@ export function TrackingList({
               }`}
             >
               {g.label}
-              <span className={`px-1.5 rounded-full text-[10px] ${active ? "bg-white/20 text-white" : "bg-white text-[#8094A7]"}`}>
+              <span className={`px-1.5 rounded-full text-xs ${active ? "bg-white/20 text-white" : "bg-white text-[#8094A7]"}`}>
                 {count}
               </span>
             </button>
@@ -143,7 +143,7 @@ export function TrackingList({
                       <div className="text-sm font-manrope font-semibold text-[#052D50]">
                         #{d.trackingNumber}
                       </div>
-                      <div className="text-[11px] font-manrope text-[#8094A7] truncate">
+                      <div className="text-xs font-manrope text-[#8094A7] truncate">
                         {d.courierName || "Unassigned"}
                       </div>
                     </div>
@@ -157,11 +157,11 @@ export function TrackingList({
                     <div className="flex-1 h-1.5 bg-[#E3E6ED] rounded-full overflow-hidden">
                       <div className="h-full rounded-full bg-[#40C4AA]" style={{ width: `${pct}%` }} />
                     </div>
-                    <span className="text-[10px] font-manrope text-[#8094A7] w-9 text-right">{pct}%</span>
+                    <span className="text-xs font-manrope text-[#8094A7] w-9 text-right">{pct}%</span>
                   </div>
 
                   <div className="flex items-center justify-between mt-2">
-                    <span className="text-[10px] font-manrope text-[#A4ACB9]">
+                    <span className="text-xs font-manrope text-[#A4ACB9]">
                       Courier · {d.courierName || "—"}
                     </span>
                     <button
@@ -169,7 +169,7 @@ export function TrackingList({
                         e.stopPropagation();
                         onToggleExpand(d.id);
                       }}
-                      className="flex items-center gap-1 text-[11px] font-manrope text-[#45617D] hover:text-[#052D50] transition-colors"
+                      className="flex items-center gap-1 text-xs font-manrope text-[#45617D] hover:text-[#052D50] transition-colors"
                     >
                       {expanded ? (
                         <>
@@ -197,26 +197,26 @@ export function TrackingList({
                             {d.latestEvent.note || statusLabels[d.latestEvent.status] || "Update"}
                           </div>
                           {d.latestEvent.locationText && (
-                            <div className="text-[11px] font-manrope text-[#8094A7] truncate">
+                            <div className="text-xs font-manrope text-[#8094A7] truncate">
                               {d.latestEvent.locationText}
                             </div>
                           )}
-                          <div className="text-[10px] font-manrope text-[#A4ACB9]">
+                          <div className="text-xs font-manrope text-[#A4ACB9]">
                             {formatEventTime(d.latestEvent.createdAt)}
                           </div>
                         </div>
                       </div>
                     ) : (
-                      <div className="text-[11px] font-manrope text-[#8094A7]">No events yet</div>
+                      <div className="text-xs font-manrope text-[#8094A7]">No events yet</div>
                     )}
 
                     <div className="flex items-center justify-between pt-2 border-t border-[#F0F0F0]">
                       <div className="flex items-center gap-2.5">
-                        <div className="w-8 h-8 rounded-full bg-[#EFFEFA] flex items-center justify-center text-[#12806B] text-[11px] font-semibold font-manrope">
+                        <div className="w-8 h-8 rounded-full bg-[#EFFEFA] flex items-center justify-center text-[#12806B] text-xs font-semibold font-manrope">
                           {(d.courierName || "?").slice(0, 2).toUpperCase()}
                         </div>
                         <div>
-                          <div className="text-[10px] font-manrope text-[#8094A7]">Courier</div>
+                          <div className="text-xs font-manrope text-[#8094A7]">Courier</div>
                           <div className="text-xs font-manrope text-[#333]">
                             {d.courierName || "Unassigned"}
                           </div>
@@ -248,7 +248,7 @@ export function TrackingList({
 
       {/* Footer hint */}
       {filtered.length > 0 && (
-        <div className="pt-2 mt-2 border-t border-[#E3E6ED] flex items-center gap-1.5 text-[11px] font-manrope text-[#A4ACB9]">
+        <div className="pt-2 mt-2 border-t border-[#E3E6ED] flex items-center gap-1.5 text-xs font-manrope text-[#A4ACB9]">
           <Truck size={13} />
           {filtered.length} shipment{filtered.length > 1 ? "s" : ""} tracked
         </div>
