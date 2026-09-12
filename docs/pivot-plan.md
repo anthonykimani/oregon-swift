@@ -73,8 +73,8 @@ Complete before starting Phase B. Tracked separately from feature work.
 - [x] Public tracking returns coarse courier location; exact location only on authenticated customer/admin routes
 - [x] Cache + rate limit OSRM/Nominatim; proper Nominatim User-Agent/contact
 - [x] Validate Socket.IO conversation membership on `thread:join`
-- [ ] Vitest coverage: routing/haversine fallback, geocoding, tracking visibility, socket membership
-- [ ] CI: build + lint + typecheck + tests
+- [x] Vitest coverage: routing/haversine fallback, geocoding, tracking visibility, socket membership
+- [x] CI: build + lint + typecheck + tests
 - [ ] TypeORM migrations; disable `synchronize` outside development
 - [ ] Central `requireRole` middleware + frontend auth/role guard
 

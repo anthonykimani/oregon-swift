@@ -44,20 +44,23 @@ async function fetchLatLng(query: string): Promise<LatLng | null> {
     const controller = new AbortController();
     const timer = setTimeout(() => controller.abort(), GEOCODE_TIMEOUT_MS);
     const url = `${NOMINATIM_URL}?format=jsonv2&limit=1&q=${encodeURIComponent(query)}`;
-    const res = await fetch(url, {
-      headers: { "User-Agent": USER_AGENT },
-      signal: controller.signal,
-    });
-    clearTimeout(timer);
-    if (!res.ok) return null;
+    try {
+      const res = await fetch(url, {
+        headers: { "User-Agent": USER_AGENT },
+        signal: controller.signal,
+      });
+      if (!res.ok) return null;
 
-    const data = (await res.json()) as { lat?: string; lon?: string }[];
-    if (Array.isArray(data) && data.length > 0) {
-      const lat = parseFloat(String(data[0].lat ?? ""));
-      const lng = parseFloat(String(data[0].lon ?? ""));
-      if (!Number.isNaN(lat) && !Number.isNaN(lng)) {
-        return { lat, lng };
+      const data = (await res.json()) as { lat?: string; lon?: string }[];
+      if (Array.isArray(data) && data.length > 0) {
+        const lat = parseFloat(String(data[0].lat ?? ""));
+        const lng = parseFloat(String(data[0].lon ?? ""));
+        if (!Number.isNaN(lat) && !Number.isNaN(lng)) {
+          return { lat, lng };
+        }
       }
+    } finally {
+      clearTimeout(timer);
     }
   } catch {
     // ignore

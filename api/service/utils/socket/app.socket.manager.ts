@@ -3,6 +3,7 @@ import jwt from "jsonwebtoken";
 import corsOptions from "../../configs/corsconfig";
 import AppDataSource from "../../configs/ormconfig";
 import { Conversation } from "../../models/conversation.entity";
+import { isConversationParticipant } from "../conversation-participant";
 
 const TOKEN_SECRET = process.env.TOKEN_SECRET;
 
@@ -14,14 +15,6 @@ export interface SocketUser {
 
 function emitError(socket: Socket, message: string) {
   socket.emit("error", { message });
-}
-
-function isParticipant(conversation: Conversation, userId: string): boolean {
-  return (
-    conversation.customerId === userId ||
-    conversation.courierId === userId ||
-    conversation.adminId === userId
-  );
 }
 
 export class SocketService {
@@ -89,7 +82,7 @@ export class SocketService {
           const conversation = await AppDataSource.getRepository(Conversation).findOne({
             where: { id: data.conversationId },
           });
-          if (!conversation || !isParticipant(conversation, userId)) {
+          if (!conversation || !isConversationParticipant(conversation, userId)) {
             emitError(socket, "Not a participant");
             return;
           }

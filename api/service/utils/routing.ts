@@ -69,22 +69,24 @@ async function computeRouteDuration(
     const url = `${OSRM_URL}/${fromLng},${fromLat};${toLng},${toLat}?overview=false&alternatives=false`;
     const controller = new AbortController();
     const timer = setTimeout(() => controller.abort(), OSRM_TIMEOUT_MS);
-    const res = await fetch(url, { signal: controller.signal });
-    clearTimeout(timer);
-
-    if (res.ok) {
-      const data = (await res.json()) as {
-        routes?: { duration?: number; distance?: number }[];
-      };
-      const route = data?.routes?.[0];
-      if (route && typeof route.duration === "number") {
-        return {
-          distanceMiles:
-            typeof route.distance === "number" ? route.distance / 1609.344 : distanceMiles,
-          durationMinutes: Math.round(route.duration / 60),
-          source: "osrm",
+    try {
+      const res = await fetch(url, { signal: controller.signal });
+      if (res.ok) {
+        const data = (await res.json()) as {
+          routes?: { duration?: number; distance?: number }[];
         };
+        const route = data?.routes?.[0];
+        if (route && typeof route.duration === "number") {
+          return {
+            distanceMiles:
+              typeof route.distance === "number" ? route.distance / 1609.344 : distanceMiles,
+            durationMinutes: Math.round(route.duration / 60),
+            source: "osrm",
+          };
+        }
       }
+    } finally {
+      clearTimeout(timer);
     }
   } catch {
     // Fall through to the naive estimate below.

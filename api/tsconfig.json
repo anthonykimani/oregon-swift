@@ -13,5 +13,6 @@
     "experimentalDecorators": true,
     "emitDecoratorMetadata": true
   },
-  "include": ["service/**/*"]
+  "include": ["service/**/*"],
+  "exclude": ["node_modules", "dist", "service/**/*.test.ts"]
 }

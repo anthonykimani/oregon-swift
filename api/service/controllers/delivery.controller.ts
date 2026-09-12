@@ -12,6 +12,7 @@ import AppDataSource from "../configs/ormconfig";
 import Controller from "./controller";
 import { geocodeToLatLng } from "../utils/geocode";
 import { estimateRouteDuration } from "../utils/routing";
+import { coarseLocation, isCourierNearby } from "../utils/tracking-location";
 import crypto from "crypto";
 
 function maskPhone(phone: string | null | undefined): string | null {
@@ -51,16 +52,6 @@ function toCoord(value: unknown, min: number, max: number): number | null {
   const n = Number(value);
   if (!Number.isFinite(n) || n < min || n > max) return null;
   return n;
-}
-
-// Public tracking is unauthenticated, so courier position is deliberately
-// coarse (~1 km at 2 decimals) to avoid exposing a driver's exact location.
-const COARSE_DECIMALS = 2;
-const COURIER_NEARBY_MILES = 1;
-
-function roundCoord(value: number): number {
-  const factor = 10 ** COARSE_DECIMALS;
-  return Math.round(value * factor) / factor;
 }
 
 class DeliveryController extends Controller {
@@ -366,15 +357,8 @@ class DeliveryController extends Controller {
           packagePieces: delivery.packagePieces,
           packageWeight: delivery.packageWeight,
           createdAt: delivery.createdAt,
-          courierLocationCoarse: live.courierLocation
-            ? {
-                lat: roundCoord(live.courierLocation.lat),
-                lng: roundCoord(live.courierLocation.lng),
-                recordedAt: live.courierLocation.recordedAt,
-              }
-            : null,
-          courierNearby:
-            live.etaDistanceMiles != null && live.etaDistanceMiles <= COURIER_NEARBY_MILES,
+          courierLocationCoarse: coarseLocation(live.courierLocation),
+          courierNearby: isCourierNearby(live.etaDistanceMiles),
           etaMinutes: live.etaMinutes,
           etaDistanceMiles: live.etaDistanceMiles,
           etaSource: live.etaSource,
