@@ -6,8 +6,15 @@
     "dev": "NODE_OPTIONS=--dns-result-order=ipv4first next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint src",
+    "typecheck": "tsc --noEmit",
+    "typecheck:api": "tsc --noEmit -p api/tsconfig.json",
+    "verify": "pnpm run typecheck && pnpm run lint && pnpm run typecheck:api"
   },
+  "engines": {
+    "node": ">=22"
+  },
+  "packageManager": "pnpm@10.17.1",
   "dependencies": {
     "@hookform/resolvers": "^5.4.1",
     "@phosphor-icons/react": "^2.1.10",

@@ -1,3 +1,11 @@
+export interface CourierLocation {
+  lat: number;
+  lng: number;
+  accuracy: number | null;
+  speed: number | null;
+  recordedAt: string;
+}
+
 export interface TrackingEvent {
   id?: string;
   status: string;
@@ -16,6 +24,7 @@ export interface TrackingShipment {
   courierName: string | null;
   courierPhone: string | null;
   courierVehicle: string | null;
+  courierLocation?: CourierLocation | null;
   pickupAddress: string;
   dropoffAddress: string;
   packageDesc: string | null;

@@ -10,6 +10,8 @@ import { TrackingMap } from "@/components/shared/tracking/tracking-map";
 import { LiveTrackingPanel } from "@/components/shared/tracking/live-tracking-panel";
 import { VehicleInfoPanel } from "@/components/shared/tracking/vehicle-info-panel";
 import type { TrackingShipment } from "@/components/shared/tracking/types";
+import { useLiveCourierTracking } from "@/lib/location/use-live-courier-tracking";
+import { messagingSocket, type CourierAvailabilityPayload } from "@/lib/messaging/socket-client";
 import { api } from "@/lib/api";
 
 interface DeliveriesPayload {
@@ -61,6 +63,27 @@ function AdminTrackingContent() {
   }, [status, fetchDeliveries, router]);
 
   const selected = items.find((d) => d.id === selectedId) ?? null;
+
+  const live = useLiveCourierTracking(
+    token,
+    selected?.courierId,
+    selected?.dropoffAddress,
+    selected?.courierLocation ?? null
+  );
+
+  const [availabilityMap, setAvailabilityMap] = useState<Record<string, string>>({});
+
+  useEffect(() => {
+    if (!token) return;
+    messagingSocket.connect(token);
+    const onAvailability = (payload: CourierAvailabilityPayload) => {
+      setAvailabilityMap((prev) => ({ ...prev, [payload.courierId]: payload.availabilityStatus }));
+    };
+    messagingSocket.onAvailability(onAvailability);
+    return () => messagingSocket.offAvailability(onAvailability);
+  }, [token]);
+
+  const selectedAvailability = selected?.courierId ? availabilityMap[selected.courierId] : undefined;
 
   const toggleExpand = useCallback((id: string) => {
     setExpandedId((prev) => (prev === id ? null : id));
@@ -134,12 +157,19 @@ function AdminTrackingContent() {
                 status={selected?.status ?? ""}
                 pickupAddress={selected?.pickupAddress ?? null}
                 dropoffAddress={selected?.dropoffAddress ?? null}
+                courierPosition={live.location ? { lat: live.location.lat, lng: live.location.lng } : null}
               />
             </div>
           )}
 
           <div className="grid grid-cols-1 lg:grid-cols-[1fr_1fr] gap-4">
-            <LiveTrackingPanel shipment={selected} />
+            <LiveTrackingPanel
+              shipment={selected}
+              courierLocation={live.location}
+              etaMinutes={live.etaMinutes}
+              etaDistanceMiles={live.etaDistanceMiles}
+              availabilityStatus={selectedAvailability}
+            />
             <VehicleInfoPanel shipment={selected} />
           </div>
         </div>

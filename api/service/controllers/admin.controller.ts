@@ -3,6 +3,7 @@ import { User } from "../models/user.entity";
 import { CourierProfile } from "../models/courier-profile.entity";
 import { Delivery } from "../models/delivery.entity";
 import { TrackingEvent } from "../models/tracking-event.entity";
+import { CourierLocation } from "../models/courier-location.entity";
 import { Invoice } from "../models/invoice.entity";
 import { InvoiceItem } from "../models/invoice-item.entity";
 import { PaymentEvent } from "../models/payment-event.entity";
@@ -165,6 +166,24 @@ class AdminController extends Controller {
         : [];
       const profileMap = new Map(profiles.map((p) => [p.userId, p]));
 
+      const locationRepo = AppDataSource.getRepository(CourierLocation);
+      const latestLocations = courierIds.length > 0
+        ? await locationRepo
+            .createQueryBuilder("loc")
+            .where("loc.courierId IN (:...courierIds)", { courierIds })
+            .andWhere((qb) => {
+              const sub = qb
+                .subQuery()
+                .select("MAX(l2.recordedAt)", "maxRecordedAt")
+                .from(CourierLocation, "l2")
+                .where("l2.courierId = loc.courierId")
+                .getQuery();
+              return `loc.recordedAt = ${sub}`;
+            })
+            .getMany()
+        : [];
+      const locationMap = new Map(latestLocations.map((l) => [l.courierId, l]));
+
       const allEvents = deliveries.length > 0
         ? await trackingRepo.find({ where: { deliveryId: In(deliveries.map((d) => d.id)) } })
         : [];
@@ -192,6 +211,18 @@ class AdminController extends Controller {
           : null,
         courierPhone: courierUser?.phoneNumber || null,
         courierVehicle: courierProfile?.vehicleType || null,
+        courierLocation: (() => {
+          const loc = d.courierId ? locationMap.get(d.courierId) : undefined;
+          return loc
+            ? {
+                lat: loc.lat,
+                lng: loc.lng,
+                accuracy: loc.accuracy,
+                speed: loc.speed,
+                recordedAt: loc.recordedAt,
+              }
+            : null;
+        })(),
         pickupAddress: d.pickupAddress,
         dropoffAddress: d.dropoffAddress,
         packageDesc: d.packageDesc,

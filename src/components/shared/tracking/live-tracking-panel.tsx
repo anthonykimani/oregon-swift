@@ -1,11 +1,11 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Truck } from "@phosphor-icons/react";
+import { Truck, Broadcast } from "@phosphor-icons/react";
 import { StatusBadge } from "@/components/ui/status-badge";
 import { geocodeAddress, formatDistance, formatDurationHours, haversineMiles } from "@/lib/geocode";
 import { progressForStatus, statusLabels, statusVariants } from "@/components/shared/tracking/types";
-import type { TrackingShipment } from "@/components/shared/tracking/types";
+import type { CourierLocation, TrackingShipment } from "@/components/shared/tracking/types";
 
 function formatShortDate(d: string | null) {
   if (!d) return "—";
@@ -16,6 +16,27 @@ function formatShortDate(d: string | null) {
     " – " +
     date.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" })
   );
+}
+
+function formatRelativeTime(iso: string | null): string | null {
+  if (!iso) return null;
+  const t = new Date(iso).getTime();
+  if (isNaN(t)) return null;
+  const diffSec = Math.round((Date.now() - t) / 1000);
+  if (diffSec < 0) return "just now";
+  if (diffSec < 60) return `${diffSec}s ago`;
+  const diffMin = Math.round(diffSec / 60);
+  if (diffMin < 60) return `${diffMin}m ago`;
+  const diffHr = Math.round(diffMin / 60);
+  return `${diffHr}h ago`;
+}
+
+function formatEtaMinutes(min: number): string {
+  if (min <= 0) return "arriving";
+  if (min < 60) return `${min} min`;
+  const h = Math.floor(min / 60);
+  const m = Math.round(min % 60);
+  return m > 0 ? `${h}h ${m}m` : `${h}h`;
 }
 
 function Donut({ pct, label }: { pct: number; label: string }) {
@@ -62,11 +83,21 @@ function Step({ label, name, time, dot }: { label: string; name: string; time: s
 export function LiveTrackingPanel({
   shipment,
   showHeader = true,
+  courierLocation,
+  etaMinutes,
+  etaDistanceMiles,
+  availabilityStatus,
 }: {
   shipment: TrackingShipment | null;
   showHeader?: boolean;
+  courierLocation?: CourierLocation | null;
+  etaMinutes?: number | null;
+  etaDistanceMiles?: number | null;
+  availabilityStatus?: string | null;
 }) {
   const [distance, setDistance] = useState<number | null>(null);
+  const liveLocation = courierLocation ?? shipment?.courierLocation ?? null;
+  const lastSeen = formatRelativeTime(liveLocation?.recordedAt ?? null);
 
   useEffect(() => {
     let cancelled = false;
@@ -126,6 +157,35 @@ export function LiveTrackingPanel({
               {shipment.courierName ? `${shipment.courierName} · ` : ""}
               {shipment.priceCents != null ? `$${(shipment.priceCents / 100).toFixed(2)}` : ""}
             </span>
+          </div>
+        </div>
+      )}
+
+      {/* Live courier ETA strip */}
+      {liveLocation && (
+        <div className="flex items-center justify-between gap-3 mb-4 px-3 py-2 bg-[#EFFEFA] border border-[#D9F9E7] rounded-lg">
+          <div className="flex items-center gap-1.5 text-[11px] font-manrope text-[#12806B] min-w-0">
+            <Broadcast size={14} />
+            <span className="font-semibold whitespace-nowrap">Live courier</span>
+            {availabilityStatus && (
+              <span className="inline-flex items-center gap-1 whitespace-nowrap">
+                <span
+                  className={`w-1.5 h-1.5 rounded-full ${
+                    availabilityStatus === "online" ? "bg-[#007837]" : "bg-[#A4ACB9]"
+                  }`}
+                />
+                <span className="capitalize">{availabilityStatus}</span>
+              </span>
+            )}
+            {lastSeen && <span className="text-[#8094A7] truncate">· {lastSeen}</span>}
+          </div>
+          <div className="text-[11px] font-manrope text-[#333] whitespace-nowrap">
+            {etaDistanceMiles != null && (
+              <span>{formatDistance(etaDistanceMiles)} away</span>
+            )}
+            {etaMinutes != null && (
+              <span>{etaDistanceMiles != null ? " · " : ""}ETA {formatEtaMinutes(etaMinutes)}</span>
+            )}
           </div>
         </div>
       )}

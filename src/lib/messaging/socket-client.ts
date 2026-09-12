@@ -1,6 +1,24 @@
 import { io, Socket } from "socket.io-client";
 import type { NewMessagePayload } from "@/types/message";
 
+export interface LocationUpdatePayload {
+  courierId: string;
+  lat: number;
+  lng: number;
+  accuracy: number | null;
+  speed: number | null;
+  recordedAt: string;
+}
+
+export interface CourierAvailabilityPayload {
+  courierId: string;
+  courierName: string | null;
+  vehicleType: string | null;
+  availabilityStatus: string;
+  lastSeenAt: string | null;
+  updatedAt: string;
+}
+
 function resolveSocketUrl(): string {
   if (process.env.NEXT_PUBLIC_SOCKET_URL) return process.env.NEXT_PUBLIC_SOCKET_URL;
   const apiUrl = process.env.NEXT_PUBLIC_API_URL;
@@ -82,6 +100,22 @@ class MessagingSocket {
 
   offUnread(callback: (payload: { conversationId: string }) => void) {
     this.socket?.off("unread:change", callback);
+  }
+
+  onLocationUpdate(callback: (payload: LocationUpdatePayload) => void) {
+    this.socket?.on("location:update", callback);
+  }
+
+  offLocationUpdate(callback: (payload: LocationUpdatePayload) => void) {
+    this.socket?.off("location:update", callback);
+  }
+
+  onAvailability(callback: (payload: CourierAvailabilityPayload) => void) {
+    this.socket?.on("courier:availability", callback);
+  }
+
+  offAvailability(callback: (payload: CourierAvailabilityPayload) => void) {
+    this.socket?.off("courier:availability", callback);
   }
 }
 

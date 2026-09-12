@@ -1,15 +1,56 @@
 "use client";
 
+import { useState } from "react";
+import { useRouter } from "next/navigation";
+import { useSession } from "next-auth/react";
 import { Phone, ChatTeardrop, Truck, UserCircle } from "@phosphor-icons/react";
+import { api } from "@/lib/api";
 import type { TrackingShipment } from "@/components/shared/tracking/types";
 
+function messagesBasePathForRole(role?: string): string {
+  if (role === "admin") return "/admin/messages";
+  if (role === "courier") return "/courier/messages";
+  return "/dashboard/messages";
+}
+
 export function VehicleInfoPanel({ shipment }: { shipment: TrackingShipment | null }) {
+  const { data: session } = useSession();
+  const router = useRouter();
+  const [messaging, setMessaging] = useState(false);
+
   if (!shipment) {
     return (
       <section className="bg-white border border-[#E3E6ED] rounded-lg p-5 flex items-center justify-center min-h-[240px]">
         <span className="text-sm text-[#8094A7]">Select a shipment to view courier</span>
       </section>
     );
+  }
+
+  async function handleMessage() {
+    if (!shipment?.id) return;
+    const token = session?.accessToken;
+    if (!token || messaging) return;
+
+    setMessaging(true);
+    try {
+      const res = await api<{ conversation: { id: string } }>("/messages/threads", {
+        method: "POST",
+        token,
+        body: JSON.stringify({
+          deliveryId: shipment.id,
+          subject: `Delivery ${shipment.trackingNumber}`,
+        }),
+      });
+      if ((res.status === 200 || res.status === 201) && res.data?.conversation?.id) {
+        router.push(
+          `${messagesBasePathForRole(session?.user?.role)}?thread=${encodeURIComponent(
+            res.data.conversation.id
+          )}`
+        );
+      }
+    } finally {
+      setMessaging(false);
+    }
   }
 
   return (
@@ -48,18 +89,31 @@ export function VehicleInfoPanel({ shipment }: { shipment: TrackingShipment | nu
           </div>
           <div className="flex gap-1.5 shrink-0">
             <button
-              className="relative w-9 h-9 bg-[#F0F0F0] rounded-lg flex items-center justify-center text-[#333] hover:bg-[#E3E6ED] transition-colors"
+              onClick={handleMessage}
+              disabled={messaging || !shipment.id}
+              className="relative w-9 h-9 bg-[#F0F0F0] rounded-lg flex items-center justify-center text-[#333] hover:bg-[#E3E6ED] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               title="Message courier"
             >
               <ChatTeardrop size={16} />
               <span className="absolute -top-0.5 -right-0.5 w-2 h-2 rounded-full bg-[#F04A4A]" />
             </button>
-            <button
-              className="w-9 h-9 bg-[#F0F0F0] rounded-lg flex items-center justify-center text-[#333] hover:bg-[#E3E6ED] transition-colors"
-              title={shipment.courierPhone ? `Call ${shipment.courierPhone}` : "Call courier"}
-            >
-              <Phone size={16} />
-            </button>
+            {shipment.courierPhone ? (
+              <a
+                href={`tel:${shipment.courierPhone}`}
+                className="w-9 h-9 bg-[#F0F0F0] rounded-lg flex items-center justify-center text-[#333] hover:bg-[#E3E6ED] transition-colors"
+                title={`Call ${shipment.courierPhone}`}
+              >
+                <Phone size={16} />
+              </a>
+            ) : (
+              <button
+                className="w-9 h-9 bg-[#F0F0F0] rounded-lg flex items-center justify-center text-[#C4CBD6] cursor-not-allowed"
+                title="No phone number available"
+                disabled
+              >
+                <Phone size={16} />
+              </button>
+            )}
           </div>
         </div>
       </div>

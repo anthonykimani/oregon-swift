@@ -15,11 +15,13 @@ export function TrackingMap({
   status,
   pickupAddress,
   dropoffAddress,
+  courierPosition,
 }: {
   trackingNumber: string;
   status: string;
   pickupAddress: string | null;
   dropoffAddress: string | null;
+  courierPosition?: { lat: number; lng: number } | null;
 }) {
   const [mounted, setMounted] = useState(false);
   const [geocoding, setGeocoding] = useState(false);
@@ -28,6 +30,7 @@ export function TrackingMap({
   const mapRef = useRef<LeafletMap | null>(null);
   const pickupRef = useRef<CircleMarker | null>(null);
   const dropoffRef = useRef<CircleMarker | null>(null);
+  const courierRef = useRef<CircleMarker | null>(null);
   const lineRef = useRef<Polyline | null>(null);
 
   useEffect(() => {
@@ -153,19 +156,52 @@ export function TrackingMap({
     };
   }, [mounted, pickupAddress, dropoffAddress]);
 
+  useEffect(() => {
+    if (!mounted || !mapRef.current) return;
+
+    let cancelled = false;
+    (async () => {
+      const L = await import("leaflet");
+      const map = mapRef.current;
+      if (!map || cancelled) return;
+
+      if (courierRef.current) {
+        map.removeLayer(courierRef.current);
+        courierRef.current = null;
+      }
+
+      if (!courierPosition) return;
+
+      courierRef.current = L.circleMarker([courierPosition.lat, courierPosition.lng], {
+        radius: 8,
+        fillColor: "#F3BC24",
+        color: "#fff",
+        weight: 3,
+        fillOpacity: 1,
+      })
+        .addTo(map)
+        .bindTooltip("Courier", { direction: "top" });
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [mounted, courierPosition]);
+
   function fitRoute() {
     const map = mapRef.current;
     if (!map) return;
     const p = pickupRef.current?.getLatLng();
     const d = dropoffRef.current?.getLatLng();
-    if (p && d) {
-      map.fitBounds(
-        [
-          [p.lat, p.lng],
-          [d.lat, d.lng],
-        ],
-        { padding: [20, 20] }
-      );
+    const c = courierRef.current?.getLatLng();
+    const points: [number, number][] = [];
+    if (p) points.push([p.lat, p.lng]);
+    if (d) points.push([d.lat, d.lng]);
+    if (c) points.push([c.lat, c.lng]);
+    if (points.length >= 2) {
+      map.fitBounds(points, { padding: [20, 20] });
+    } else if (c) {
+      map.setView([c.lat, c.lng], 14);
     } else {
       map.setView(DEFAULT_VIEW, 9);
     }

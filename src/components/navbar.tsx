@@ -1,6 +1,7 @@
 "use client";
 
 import { CaretDown, Globe, List, X } from "@phosphor-icons/react/dist/ssr";
+import Link from "next/link";
 import { useState } from "react";
 
 const navLinks = [
@@ -15,24 +16,24 @@ export default function Navbar() {
 
   return (
     <nav className="relative flex items-center justify-between px-6 lg:px-10 xl:px-24 py-3 bg-[#fcfcfc] z-50">
-      <a href="/" className="font-aboreto text-sm md:text-lg xl:text-xl text-brand truncate min-w-0 flex-1 lg:flex-none hover:opacity-80 transition-opacity">Oregon Swift Deliveries LLC</a>
+      <Link href="/" className="font-aboreto text-sm md:text-lg xl:text-xl text-brand truncate min-w-0 flex-1 lg:flex-none hover:opacity-80 transition-opacity">Oregon Swift Deliveries LLC</Link>
 
       <div className="hidden lg:flex items-center gap-6 xl:gap-8">
-        <a href="/" className="font-dm-sans text-sm xl:text-base text-foreground hover:text-brand transition-colors whitespace-nowrap">
+        <Link href="/" className="font-dm-sans text-sm xl:text-base text-foreground hover:text-brand transition-colors whitespace-nowrap">
           Home
-        </a>
+        </Link>
         <div className="flex items-center gap-1">
-          <a href="/services" className="font-dm-sans text-sm xl:text-base text-foreground hover:text-brand transition-colors whitespace-nowrap">Services</a>
+          <Link href="/services" className="font-dm-sans text-sm xl:text-base text-foreground hover:text-brand transition-colors whitespace-nowrap">Services</Link>
           <CaretDown size={10} className="text-foreground shrink-0" weight="bold" />
         </div>
         {navLinks.map((item) => (
-          <a key={item.label} href={item.href} className="font-dm-sans text-sm xl:text-base text-foreground hover:text-brand transition-colors whitespace-nowrap">
+          <Link key={item.label} href={item.href} className="font-dm-sans text-sm xl:text-base text-foreground hover:text-brand transition-colors whitespace-nowrap">
             {item.label}
-          </a>
+          </Link>
         ))}
-        <a href="/tracking" className="font-dm-sans text-sm xl:text-base text-foreground hover:text-brand transition-colors whitespace-nowrap">
+        <Link href="/tracking" className="font-dm-sans text-sm xl:text-base text-foreground hover:text-brand transition-colors whitespace-nowrap">
           Track
-        </a>
+        </Link>
       </div>
 
       <div className="hidden lg:flex items-center gap-2 xl:gap-3">
@@ -41,12 +42,12 @@ export default function Navbar() {
           <span className="font-dm-sans text-sm text-foreground whitespace-nowrap">United States</span>
           <CaretDown size={10} className="text-foreground shrink-0" weight="bold" />
         </div>
-        <a href="/sign-up" className="font-inter text-xs bg-brand text-white px-4 xl:px-5 py-2.5 rounded-xl whitespace-nowrap hover:opacity-90 transition-opacity">
+        <Link href="/sign-up" className="font-inter text-xs bg-brand text-white px-4 xl:px-5 py-2.5 rounded-xl whitespace-nowrap hover:opacity-90 transition-opacity">
           Get started
-        </a>
-        <a href="/sign-in" className="font-inter text-xs text-brand border border-[#e5e5e5] px-4 xl:px-5 py-2.5 rounded-xl whitespace-nowrap hover:border-brand transition-colors">
+        </Link>
+        <Link href="/sign-in" className="font-inter text-xs text-brand border border-[#e5e5e5] px-4 xl:px-5 py-2.5 rounded-xl whitespace-nowrap hover:border-brand transition-colors">
           SIGN iN
-        </a>
+        </Link>
       </div>
 
       <button
@@ -59,21 +60,21 @@ export default function Navbar() {
 
       {mobileOpen && (
         <div className="absolute top-full left-0 w-full bg-[#fcfcfc] border-t border-foreground/5 px-6 py-6 flex flex-col gap-4 lg:hidden shadow-lg">
-          <a href="/" className="font-dm-sans text-base text-foreground">
+          <Link href="/" className="font-dm-sans text-base text-foreground">
             Home
-          </a>
+          </Link>
           <div className="flex items-center gap-1">
-            <a href="/services" className="font-dm-sans text-base text-foreground">Services</a>
+            <Link href="/services" className="font-dm-sans text-base text-foreground">Services</Link>
             <CaretDown size={10} className="text-foreground" weight="bold" />
           </div>
           {navLinks.map((item) => (
-            <a key={item.label} href={item.href} className="font-dm-sans text-base text-foreground">
+            <Link key={item.label} href={item.href} className="font-dm-sans text-base text-foreground">
               {item.label}
-            </a>
+            </Link>
           ))}
-          <a href="/tracking" className="font-dm-sans text-base text-foreground">
+          <Link href="/tracking" className="font-dm-sans text-base text-foreground">
             Track
-          </a>
+          </Link>
           <div className="h-px bg-foreground/10 my-2" />
           <div className="flex items-center gap-1">
             <Globe size={14} className="text-foreground" />
@@ -81,12 +82,12 @@ export default function Navbar() {
             <CaretDown size={10} className="text-foreground" weight="bold" />
           </div>
           <div className="flex flex-col gap-3 pt-2">
-            <a href="/sign-up" className="font-inter text-xs bg-brand text-white px-5 py-2.5 rounded-xl text-center hover:opacity-90 transition-opacity">
+            <Link href="/sign-up" className="font-inter text-xs bg-brand text-white px-5 py-2.5 rounded-xl text-center hover:opacity-90 transition-opacity">
               Get started
-            </a>
-            <a href="/sign-in" className="font-inter text-xs text-brand border border-[#e5e5e5] px-5 py-2.5 rounded-xl text-center hover:border-brand transition-colors">
+            </Link>
+            <Link href="/sign-in" className="font-inter text-xs text-brand border border-[#e5e5e5] px-5 py-2.5 rounded-xl text-center hover:border-brand transition-colors">
               SIGN iN
-            </a>
+            </Link>
           </div>
         </div>
       )}

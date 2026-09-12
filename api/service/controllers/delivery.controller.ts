@@ -7,8 +7,11 @@ import { RateMatrix } from "../models/rate-matrix.entity";
 import { TrackingEvent } from "../models/tracking-event.entity";
 import { User } from "../models/user.entity";
 import { CourierProfile } from "../models/courier-profile.entity";
+import { CourierLocation } from "../models/courier-location.entity";
 import AppDataSource from "../configs/ormconfig";
 import Controller from "./controller";
+import { geocodeToLatLng } from "../utils/geocode";
+import { estimateRouteDuration } from "../utils/routing";
 import crypto from "crypto";
 
 function maskPhone(phone: string | null | undefined): string | null {
@@ -321,6 +324,8 @@ class DeliveryController extends Controller {
         order: { createdAt: "ASC" },
       });
 
+      const live = await DeliveryController.buildLiveTracking(delivery);
+
       return res.send(
         super.response(super._200, {
           trackingNumber: delivery.trackingNumber,
@@ -335,6 +340,10 @@ class DeliveryController extends Controller {
           packagePieces: delivery.packagePieces,
           packageWeight: delivery.packageWeight,
           createdAt: delivery.createdAt,
+          courierLocation: live.courierLocation,
+          etaMinutes: live.etaMinutes,
+          etaDistanceMiles: live.etaDistanceMiles,
+          etaSource: live.etaSource,
           trackingEvents: events.map((e) => ({
             id: e.id,
             status: e.status,
@@ -346,6 +355,73 @@ class DeliveryController extends Controller {
     } catch (error) {
       return res.send(super.response(super._500, null, super.ex(error)));
     }
+  }
+
+  private static async buildLiveTracking(delivery: Delivery) {
+    const result: {
+      courierLocation: {
+        lat: number;
+        lng: number;
+        accuracy: number | null;
+        speed: number | null;
+        recordedAt: Date;
+      } | null;
+      etaMinutes: number | null;
+      etaDistanceMiles: number | null;
+      etaSource: "osrm" | "haversine" | null;
+    } = {
+      courierLocation: null,
+      etaMinutes: null,
+      etaDistanceMiles: null,
+      etaSource: null,
+    };
+
+    if (!delivery.courierId) return result;
+
+    const locationRepo = AppDataSource.getRepository(CourierLocation);
+    const location = await locationRepo.findOne({
+      where: { courierId: delivery.courierId },
+      order: { recordedAt: "DESC" },
+    });
+    if (!location) return result;
+
+    result.courierLocation = {
+      lat: location.lat,
+      lng: location.lng,
+      accuracy: location.accuracy,
+      speed: location.speed,
+      recordedAt: location.recordedAt,
+    };
+
+    // Resolve a dropoff anchor: geocode the address, else the dropoff zone center.
+    let toLat: number | null = null;
+    let toLng: number | null = null;
+
+    if (delivery.dropoffAddress) {
+      const geocoded = await geocodeToLatLng(delivery.dropoffAddress);
+      if (geocoded) {
+        toLat = geocoded.lat;
+        toLng = geocoded.lng;
+      }
+    }
+
+    if (toLat === null && delivery.dropoffZoneId) {
+      const zoneRepo = AppDataSource.getRepository(Zone);
+      const zone = await zoneRepo.findOne({ where: { id: delivery.dropoffZoneId } });
+      if (zone?.centerLat != null && zone?.centerLng != null) {
+        toLat = zone.centerLat;
+        toLng = zone.centerLng;
+      }
+    }
+
+    if (toLat === null || toLng === null) return result;
+
+    const estimate = await estimateRouteDuration(location.lat, location.lng, toLat, toLng);
+    result.etaDistanceMiles = Math.round(estimate.distanceMiles * 10) / 10;
+    result.etaMinutes = estimate.durationMinutes;
+    result.etaSource = estimate.source;
+
+    return result;
   }
 }
 

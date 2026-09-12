@@ -11,6 +11,7 @@ import adminRoutes from "./routes/index.admin";
 import customerRoutes from "./routes/index.customer";
 import courierRoutes from "./routes/index.courier";
 import messageRoutes from "./routes/index.message";
+import routeRoutes from "./routes/index.route";
 
 import SocketService from "./utils/socket/app.socket.manager";
 
@@ -30,6 +31,7 @@ app.use("/api/v1/admin", adminRoutes);
 app.use("/api/v1", customerRoutes);
 app.use("/api/v1", courierRoutes);
 app.use("/api/v1", messageRoutes);
+app.use("/api/v1", routeRoutes);
 
 app.get("/health", (_req, res) => {
   res.status(200).json({

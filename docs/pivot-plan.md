@@ -52,16 +52,31 @@ Build FIRST. Availability unblocks the loadboard.
 - [x] Verify: tsc + lint + smoke
 
 ### A.3 Routing-Based ETA
-- [ ] API: `GET /route/estimate?fromLat&fromLng&toLat&toLng` — proxy free OSRM; fallback to haversine/45mph
-- [ ] API: `GET /tracking/:trackingNumber` returns `courierLocation` + live `etaMinutes`
-- [ ] UI: LiveTrackingPanel shows last-seen, distance, ETA
-- [ ] Verify: tsc + lint + smoke
+- [x] API: `GET /route/estimate?fromLat&fromLng&toLat&toLng` — proxy free OSRM; fallback to haversine/45mph
+- [x] API: `GET /tracking/:trackingNumber` returns `courierLocation` + live `etaMinutes`
+- [x] UI: LiveTrackingPanel shows last-seen, distance, ETA
+- [x] Verify: tsc + lint + smoke
 
 ### A.4 Live Map (frontend)
-- [ ] UI: `TrackingMap` optional `courierPosition` marker
-- [ ] UI: admin tracking page subscribes to `location:update` + `courier:availability`; live driver markers
-- [ ] UI: VehicleInfoPanel — wire decorative Message/Call buttons (message → thread find-or-create; call → `tel:`)
-- [ ] Verify: tsc + lint + smoke
+- [x] UI: `TrackingMap` optional `courierPosition` marker
+- [x] UI: admin tracking page subscribes to `location:update` + `courier:availability`; live driver markers
+- [x] UI: VehicleInfoPanel — wire decorative Message/Call buttons (message → thread find-or-create; call → `tel:`)
+- [x] Verify: tsc + lint + smoke
+
+---
+
+## Phase A Hardening (production readiness)
+
+Complete before starting Phase B. Tracked separately from feature work.
+
+- [ ] Persist delivery pickup/dropoff coordinates on create; stop per-request geocoding
+- [ ] Public tracking returns coarse courier location; exact location only on authenticated customer/admin routes
+- [ ] Cache + rate limit OSRM/Nominatim; proper Nominatim User-Agent/contact
+- [ ] Validate Socket.IO conversation membership on `thread:join`
+- [ ] Vitest coverage: routing/haversine fallback, geocoding, tracking visibility, socket membership
+- [ ] CI: build + lint + typecheck + tests
+- [ ] TypeORM migrations; disable `synchronize` outside development
+- [ ] Central `requireRole` middleware + frontend auth/role guard
 
 ---
 
