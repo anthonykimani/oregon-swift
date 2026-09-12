@@ -1,25 +1,27 @@
 import express from "express";
 import AdminController from "../controllers/admin.controller";
-import { authMiddleware } from "../middleware/auth.middleware";
+import { authMiddleware, requireRole } from "../middleware/auth.middleware";
 
 const router = express.Router();
 
-router.get("/users", authMiddleware, AdminController.getCourierApplications);
-router.patch("/users/:id/approve", authMiddleware, AdminController.approveCourier);
-router.patch("/users/:id/reject", authMiddleware, AdminController.rejectCourier);
+router.use(authMiddleware, requireRole("admin"));
 
-router.get("/deliveries", authMiddleware, AdminController.getDeliveries);
-router.get("/deliveries/:id", authMiddleware, AdminController.getDelivery);
-router.patch("/deliveries/:id/assign", authMiddleware, AdminController.assignCourier);
+router.get("/users", AdminController.getCourierApplications);
+router.patch("/users/:id/approve", AdminController.approveCourier);
+router.patch("/users/:id/reject", AdminController.rejectCourier);
 
-router.get("/couriers", authMiddleware, AdminController.getCouriers);
+router.get("/deliveries", AdminController.getDeliveries);
+router.get("/deliveries/:id", AdminController.getDelivery);
+router.patch("/deliveries/:id/assign", AdminController.assignCourier);
 
-router.get("/invoices", authMiddleware, AdminController.invoices);
-router.post("/invoices/generate", authMiddleware, AdminController.generateAllInvoices);
-router.get("/invoices/:id", authMiddleware, AdminController.getInvoice);
-router.post("/invoices/:id/approve", authMiddleware, AdminController.approveInvoice);
-router.post("/invoices/:id/release", authMiddleware, AdminController.releaseInvoice);
+router.get("/couriers", AdminController.getCouriers);
 
-router.get("/dashboard/stats", authMiddleware, AdminController.dashboardStats);
+router.get("/invoices", AdminController.invoices);
+router.post("/invoices/generate", AdminController.generateAllInvoices);
+router.get("/invoices/:id", AdminController.getInvoice);
+router.post("/invoices/:id/approve", AdminController.approveInvoice);
+router.post("/invoices/:id/release", AdminController.releaseInvoice);
+
+router.get("/dashboard/stats", AdminController.dashboardStats);
 
 export default router;

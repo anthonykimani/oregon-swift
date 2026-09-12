@@ -53,7 +53,22 @@ export const authOptions: NextAuthOptions = {
     }),
   ],
   callbacks: {
-    async jwt({ token, account, profile }) {
+    async jwt({ token, user, account, profile }) {
+      // Persist our custom user fields (including role) for credentials
+      // sign-ins; the Google branch below overwrites them from the API.
+      if (user) {
+        const u = user as unknown as Record<string, unknown>;
+        token.accessToken = (u.accessToken as string) ?? token.accessToken;
+        token.user = {
+          id: String(u.id ?? token.sub ?? ""),
+          email: String(u.email ?? ""),
+          firstname: String(u.firstname ?? ""),
+          lastname: String(u.lastname ?? ""),
+          username: String(u.username ?? ""),
+          role: String(u.role ?? "customer"),
+        };
+      }
+
       if (account?.provider === "google") {
         const gp = profile as GoogleProfile;
 

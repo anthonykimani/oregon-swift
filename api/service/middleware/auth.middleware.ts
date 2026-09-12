@@ -58,3 +58,23 @@ export function authMiddleware(
     });
   }
 }
+
+/**
+ * Requires the authenticated user to hold one of the given roles.
+ * Must be mounted after authMiddleware.
+ */
+export function requireRole(...roles: string[]) {
+  return (req: Request, res: Response, next: NextFunction) => {
+    const role = req.user?.role;
+    if (!role || !roles.includes(role)) {
+      res.status(403).json({
+        status: 403,
+        message: "Forbidden",
+        data: null,
+        errors: ["Insufficient permissions"],
+      });
+      return;
+    }
+    next();
+  };
+}
