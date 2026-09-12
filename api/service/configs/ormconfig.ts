@@ -58,7 +58,11 @@ const AppDataSource = new DataSource({
     Message,
     CourierLocation,
   ],
-  synchronize: true,
+  migrations: [__dirname + "/../migrations/*{.ts,.js}"],
+  migrationsTableName: "migrations",
+  // Schema changes are managed through versioned migrations. Set DB_SYNC=true
+  // only for throwaway local databases; never enable it in production.
+  synchronize: process.env.DB_SYNC === "true",
   dropSchema: false,
   logging: false,
 });

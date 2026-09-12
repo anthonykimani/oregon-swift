@@ -75,7 +75,7 @@ Complete before starting Phase B. Tracked separately from feature work.
 - [x] Validate Socket.IO conversation membership on `thread:join`
 - [x] Vitest coverage: routing/haversine fallback, geocoding, tracking visibility, socket membership
 - [x] CI: build + lint + typecheck + tests
-- [ ] TypeORM migrations; disable `synchronize` outside development
+- [x] TypeORM migrations; disable `synchronize` outside development
 - [ ] Central `requireRole` middleware + frontend auth/role guard
 
 ---
