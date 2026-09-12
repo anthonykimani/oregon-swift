@@ -1,6 +1,8 @@
 import { Server, Socket } from "socket.io";
 import jwt from "jsonwebtoken";
 import corsOptions from "../../configs/corsconfig";
+import AppDataSource from "../../configs/ormconfig";
+import { Conversation } from "../../models/conversation.entity";
 
 const TOKEN_SECRET = process.env.TOKEN_SECRET;
 
@@ -12,6 +14,14 @@ export interface SocketUser {
 
 function emitError(socket: Socket, message: string) {
   socket.emit("error", { message });
+}
+
+function isParticipant(conversation: Conversation, userId: string): boolean {
+  return (
+    conversation.customerId === userId ||
+    conversation.courierId === userId ||
+    conversation.adminId === userId
+  );
 }
 
 export class SocketService {
@@ -69,14 +79,24 @@ export class SocketService {
         socket.join(`role:${user.role}`);
       }
 
-      socket.on("thread:join", (data: { conversationId: string }) => {
+      socket.on("thread:join", async (data: { conversationId: string }) => {
         const userId = socket.data.user?.id as string | undefined;
         if (!userId || !data?.conversationId) {
           emitError(socket, "Invalid thread");
           return;
         }
-        const room = `conversation:${data.conversationId}`;
-        socket.join(room);
+        try {
+          const conversation = await AppDataSource.getRepository(Conversation).findOne({
+            where: { id: data.conversationId },
+          });
+          if (!conversation || !isParticipant(conversation, userId)) {
+            emitError(socket, "Not a participant");
+            return;
+          }
+          socket.join(`conversation:${data.conversationId}`);
+        } catch {
+          emitError(socket, "Unable to join thread");
+        }
       });
 
       socket.on("thread:leave", (data: { conversationId: string }) => {

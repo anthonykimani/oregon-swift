@@ -63,6 +63,7 @@ function deliveryToShipment(delivery: Delivery): TrackingShipment {
     courierName: delivery.courierName ?? null,
     courierPhone: delivery.courierPhone ?? null,
     courierVehicle: delivery.courierVehicle ?? null,
+    courierLocation: delivery.courierLocation ?? null,
     pickupAddress: delivery.pickupAddress,
     dropoffAddress: delivery.dropoffAddress,
     packageDesc: delivery.packageDesc,
@@ -194,11 +195,22 @@ export function DeliveryDetailContent({ id, token }: { id: string; token: string
           status={delivery.status}
           pickupAddress={delivery.pickupAddress}
           dropoffAddress={delivery.dropoffAddress}
+          courierPosition={
+            delivery.courierLocation
+              ? { lat: delivery.courierLocation.lat, lng: delivery.courierLocation.lng }
+              : null
+          }
         />
       </div>
 
       {/* Live tracking + courier */}
-      <LiveTrackingPanel shipment={shipment} showHeader={false} />
+      <LiveTrackingPanel
+        shipment={shipment}
+        showHeader={false}
+        courierLocation={delivery.courierLocation}
+        etaMinutes={delivery.etaMinutes}
+        etaDistanceMiles={delivery.etaDistanceMiles}
+      />
       <VehicleInfoPanel shipment={shipment} />
 
       {/* Delivery info */}

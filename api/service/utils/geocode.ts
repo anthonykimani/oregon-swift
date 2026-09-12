@@ -3,21 +3,52 @@ export interface LatLng {
   lng: number;
 }
 
-/**
- * Minimal server-side forward geocoder using the public Nominatim endpoint.
- * Used for coarse live-ETA anchors (dropoff) when no stored coordinate exists.
- * Returns null on any failure so callers can fall back to zone centers.
- */
-export async function geocodeToLatLng(query: string): Promise<LatLng | null> {
-  if (!query || !query.trim()) return null;
+const NOMINATIM_URL = "https://nominatim.openstreetmap.org/search";
+const GEOCODE_TIMEOUT_MS = 2500;
+const CACHE_TTL_MS = 5 * 60_000;
+const MAX_CACHE_ENTRIES = 500;
 
+// Nominatim's usage policy requires an identifying User-Agent with a contact
+// URL. Override via env in deployments.
+const USER_AGENT =
+  process.env.GEOCODE_USER_AGENT ||
+  "oregon-courier-api/0.1 (+https://oregonswiftdeliveries.com)";
+
+interface CacheEntry {
+  expiresAt: number;
+  value: LatLng | null;
+}
+
+const cache = new Map<string, CacheEntry>();
+const inflight = new Map<string, Promise<LatLng | null>>();
+
+function normalize(query: string): string {
+  return query.trim().toLowerCase().replace(/\s+/g, " ");
+}
+
+function pruneCache() {
+  if (cache.size <= MAX_CACHE_ENTRIES) return;
+  const now = Date.now();
+  for (const [key, entry] of cache) {
+    if (entry.expiresAt <= now) cache.delete(key);
+  }
+  while (cache.size > MAX_CACHE_ENTRIES) {
+    const oldest = cache.keys().next().value;
+    if (oldest === undefined) break;
+    cache.delete(oldest);
+  }
+}
+
+async function fetchLatLng(query: string): Promise<LatLng | null> {
   try {
-    const url = `https://nominatim.openstreetmap.org/search?format=jsonv2&limit=1&q=${encodeURIComponent(
-      query.trim()
-    )}`;
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), GEOCODE_TIMEOUT_MS);
+    const url = `${NOMINATIM_URL}?format=jsonv2&limit=1&q=${encodeURIComponent(query)}`;
     const res = await fetch(url, {
-      headers: { "User-Agent": "oregon-courier-api/0.1" },
+      headers: { "User-Agent": USER_AGENT },
+      signal: controller.signal,
     });
+    clearTimeout(timer);
     if (!res.ok) return null;
 
     const data = (await res.json()) as { lat?: string; lon?: string }[];
@@ -32,4 +63,37 @@ export async function geocodeToLatLng(query: string): Promise<LatLng | null> {
     // ignore
   }
   return null;
+}
+
+/**
+ * Minimal server-side forward geocoder using the public Nominatim endpoint.
+ * Used as a legacy fallback for deliveries without stored coordinates.
+ * Results (including negative results) are cached to avoid hammering the
+ * public endpoint, and concurrent identical lookups are coalesced.
+ */
+export async function geocodeToLatLng(query: string): Promise<LatLng | null> {
+  if (!query || !query.trim()) return null;
+
+  const key = normalize(query);
+
+  const cached = cache.get(key);
+  if (cached && cached.expiresAt > Date.now()) {
+    return cached.value;
+  }
+
+  const pending = inflight.get(key);
+  if (pending) return pending;
+
+  const promise = fetchLatLng(query.trim())
+    .then((value) => {
+      cache.set(key, { expiresAt: Date.now() + CACHE_TTL_MS, value });
+      pruneCache();
+      return value;
+    })
+    .finally(() => {
+      inflight.delete(key);
+    });
+
+  inflight.set(key, promise);
+  return promise;
 }

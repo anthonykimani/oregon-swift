@@ -46,6 +46,23 @@ function detectZone(lat: number, lng: number, zones: Zone[]): Zone | null {
   return null;
 }
 
+function toCoord(value: unknown, min: number, max: number): number | null {
+  if (value === null || value === undefined || value === "") return null;
+  const n = Number(value);
+  if (!Number.isFinite(n) || n < min || n > max) return null;
+  return n;
+}
+
+// Public tracking is unauthenticated, so courier position is deliberately
+// coarse (~1 km at 2 decimals) to avoid exposing a driver's exact location.
+const COARSE_DECIMALS = 2;
+const COURIER_NEARBY_MILES = 1;
+
+function roundCoord(value: number): number {
+  const factor = 10 ** COARSE_DECIMALS;
+  return Math.round(value * factor) / factor;
+}
+
 class DeliveryController extends Controller {
   public static async create(req: Request, res: Response) {
     try {
@@ -112,12 +129,16 @@ class DeliveryController extends Controller {
       delivery.status = "pending";
       delivery.pickupZoneId = resolvedPickupZoneId;
       delivery.pickupAddress = pickupAddress || "";
+      delivery.pickupLat = toCoord(pickupLat, -90, 90);
+      delivery.pickupLng = toCoord(pickupLng, -180, 180);
       delivery.pickupContactName = pickupContactName || "";
       delivery.pickupContactPhone = pickupContactPhone || "";
       delivery.pickupWindowStart = pickupWindowStart || null;
       delivery.pickupWindowEnd = pickupWindowEnd || null;
       delivery.dropoffZoneId = resolvedDropoffZoneId;
       delivery.dropoffAddress = dropoffAddress || "";
+      delivery.dropoffLat = toCoord(dropoffLat, -90, 90);
+      delivery.dropoffLng = toCoord(dropoffLng, -180, 180);
       delivery.dropoffContactName = dropoffContactName || "";
       delivery.dropoffContactPhone = dropoffContactPhone || "";
       delivery.dropoffWindowStart = dropoffWindowStart || null;
@@ -287,6 +308,7 @@ class DeliveryController extends Controller {
       }
 
       const latestEvent = events.length > 0 ? events[events.length - 1] : null;
+      const live = await DeliveryController.buildLiveTracking(delivery);
 
       return res.send(
         super.response(super._200, {
@@ -297,6 +319,10 @@ class DeliveryController extends Controller {
           courierVehicle,
           customerName,
           latestEvent,
+          courierLocation: live.courierLocation,
+          etaMinutes: live.etaMinutes,
+          etaDistanceMiles: live.etaDistanceMiles,
+          etaSource: live.etaSource,
         })
       );
     } catch (error) {
@@ -340,7 +366,15 @@ class DeliveryController extends Controller {
           packagePieces: delivery.packagePieces,
           packageWeight: delivery.packageWeight,
           createdAt: delivery.createdAt,
-          courierLocation: live.courierLocation,
+          courierLocationCoarse: live.courierLocation
+            ? {
+                lat: roundCoord(live.courierLocation.lat),
+                lng: roundCoord(live.courierLocation.lng),
+                recordedAt: live.courierLocation.recordedAt,
+              }
+            : null,
+          courierNearby:
+            live.etaDistanceMiles != null && live.etaDistanceMiles <= COURIER_NEARBY_MILES,
           etaMinutes: live.etaMinutes,
           etaDistanceMiles: live.etaDistanceMiles,
           etaSource: live.etaSource,
@@ -393,11 +427,16 @@ class DeliveryController extends Controller {
       recordedAt: location.recordedAt,
     };
 
-    // Resolve a dropoff anchor: geocode the address, else the dropoff zone center.
+    // Resolve a dropoff anchor: stored coordinates first, then a legacy
+    // geocode fallback for rows created before coordinates were persisted,
+    // and finally the dropoff zone center.
     let toLat: number | null = null;
     let toLng: number | null = null;
 
-    if (delivery.dropoffAddress) {
+    if (delivery.dropoffLat != null && delivery.dropoffLng != null) {
+      toLat = delivery.dropoffLat;
+      toLng = delivery.dropoffLng;
+    } else if (delivery.dropoffAddress) {
       const geocoded = await geocodeToLatLng(delivery.dropoffAddress);
       if (geocoded) {
         toLat = geocoded.lat;

@@ -34,6 +34,12 @@ export class Delivery extends BaseEntity {
   @Column({ type: "text", nullable: true })
   pickupAddress: string;
 
+  @Column({ type: "double precision", nullable: true })
+  pickupLat: number | null;
+
+  @Column({ type: "double precision", nullable: true })
+  pickupLng: number | null;
+
   @Column({ length: 100, nullable: true })
   pickupContactName: string;
 
@@ -51,6 +57,12 @@ export class Delivery extends BaseEntity {
 
   @Column({ type: "text", nullable: true })
   dropoffAddress: string;
+
+  @Column({ type: "double precision", nullable: true })
+  dropoffLat: number | null;
+
+  @Column({ type: "double precision", nullable: true })
+  dropoffLng: number | null;
 
   @Column({ length: 100, nullable: true })
   dropoffContactName: string;

@@ -1,3 +1,5 @@
+import type { CourierLocation } from "@/components/shared/tracking/types";
+
 export interface Delivery {
   id: string;
   trackingNumber: string;
@@ -34,6 +36,10 @@ export interface Delivery {
   courierVehicle?: string | null;
   customerName?: string | null;
   latestEvent?: TrackingEvent | null;
+  courierLocation?: CourierLocation | null;
+  etaMinutes?: number | null;
+  etaDistanceMiles?: number | null;
+  etaSource?: "osrm" | "haversine" | null;
 }
 
 export interface TrackingEvent {

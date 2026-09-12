@@ -9,6 +9,17 @@ const OSRM_URL = "https://router.project-osrm.org/route/v1/driving";
 const OSRM_TIMEOUT_MS = 2500;
 const FALLBACK_SPEED_MPH = 45;
 
+const CACHE_TTL_MS = 30_000;
+const MAX_CACHE_ENTRIES = 500;
+
+interface CacheEntry {
+  expiresAt: number;
+  value: RouteEstimate;
+}
+
+const cache = new Map<string, CacheEntry>();
+const inflight = new Map<string, Promise<RouteEstimate>>();
+
 export function haversineMiles(
   lat1: number,
   lng1: number,
@@ -24,12 +35,29 @@ export function haversineMiles(
   return 2 * EARTH_RADIUS_MI * Math.asin(Math.sqrt(a));
 }
 
-/**
- * Estimate driving distance and duration between two coordinates.
- * Prefers the free OSRM public server; falls back to a naive straight-line
- * estimate at 45 mph when OSRM is unreachable or times out.
- */
-export async function estimateRouteDuration(
+function cacheKey(
+  fromLat: number,
+  fromLng: number,
+  toLat: number,
+  toLng: number
+): string {
+  return [fromLat, fromLng, toLat, toLng].map((n) => n.toFixed(4)).join(":");
+}
+
+function pruneCache() {
+  if (cache.size <= MAX_CACHE_ENTRIES) return;
+  const now = Date.now();
+  for (const [key, entry] of cache) {
+    if (entry.expiresAt <= now) cache.delete(key);
+  }
+  while (cache.size > MAX_CACHE_ENTRIES) {
+    const oldest = cache.keys().next().value;
+    if (oldest === undefined) break;
+    cache.delete(oldest);
+  }
+}
+
+async function computeRouteDuration(
   fromLat: number,
   fromLng: number,
   toLat: number,
@@ -67,4 +95,42 @@ export async function estimateRouteDuration(
     durationMinutes: Math.round((distanceMiles / FALLBACK_SPEED_MPH) * 60),
     source: "haversine",
   };
+}
+
+/**
+ * Estimate driving distance and duration between two coordinates.
+ * Prefers the free OSRM public server; falls back to a naive straight-line
+ * estimate at 45 mph when OSRM is unreachable or times out.
+ *
+ * Results are cached briefly and concurrent identical requests are coalesced
+ * so public tracking cannot amplify load on the external routing service.
+ */
+export async function estimateRouteDuration(
+  fromLat: number,
+  fromLng: number,
+  toLat: number,
+  toLng: number
+): Promise<RouteEstimate> {
+  const key = cacheKey(fromLat, fromLng, toLat, toLng);
+
+  const cached = cache.get(key);
+  if (cached && cached.expiresAt > Date.now()) {
+    return cached.value;
+  }
+
+  const pending = inflight.get(key);
+  if (pending) return pending;
+
+  const promise = computeRouteDuration(fromLat, fromLng, toLat, toLng)
+    .then((value) => {
+      cache.set(key, { expiresAt: Date.now() + CACHE_TTL_MS, value });
+      pruneCache();
+      return value;
+    })
+    .finally(() => {
+      inflight.delete(key);
+    });
+
+  inflight.set(key, promise);
+  return promise;
 }

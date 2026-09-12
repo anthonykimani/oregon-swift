@@ -5,10 +5,13 @@ import DeliveryController from "../controllers/delivery.controller";
 import InvoiceController from "../controllers/invoice.controller";
 import DashboardController from "../controllers/dashboard.controller";
 import { authMiddleware } from "../middleware/auth.middleware";
+import { rateLimit } from "../middleware/rate-limit.middleware";
 
 const router = express.Router();
 
-router.get("/tracking/:trackingNumber", DeliveryController.trackByNumber);
+const trackingLimiter = rateLimit({ windowMs: 60_000, max: 60, scope: "tracking" });
+
+router.get("/tracking/:trackingNumber", trackingLimiter, DeliveryController.trackByNumber);
 
 router.get("/dashboard/stats", authMiddleware, DashboardController.stats);
 router.get("/zones", authMiddleware, ZoneController.list);
