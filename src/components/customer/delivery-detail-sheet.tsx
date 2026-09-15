@@ -158,11 +158,12 @@ export function DeliveryDetailContent({ id, token }: { id: string; token: string
   }
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-5 pb-8">
       {/* Header */}
-      <div className="flex items-start justify-between gap-4 pr-8">
+      <div className="sticky top-0 z-10 -mx-4 -mt-4 flex items-start justify-between gap-4 border-b border-[#DCE2D9] bg-[#F3F5F1]/95 px-4 py-5 pr-20 backdrop-blur sm:-mx-6 sm:-mt-6 sm:px-6 sm:py-6 sm:pr-20">
         <div className="min-w-0">
-          <h2 className="text-2xl font-clash-display font-semibold text-[#173420]">
+          <p className="mb-1 text-xs font-bold uppercase tracking-[0.14em] text-forest-600">Delivery detail</p>
+          <h2 className="text-2xl font-manrope font-semibold tracking-[-0.02em] text-[#173420]">
             {delivery.trackingNumber}
           </h2>
           <p className="text-sm text-[#8094A7] mt-1">
@@ -182,14 +183,14 @@ export function DeliveryDetailContent({ id, token }: { id: string; token: string
         type="button"
         onClick={messageAboutDelivery}
         disabled={messaging}
-        className="w-full flex items-center justify-center gap-2 rounded-xl border border-[#173420] bg-white text-[#173420] text-sm font-manrope font-semibold py-2.5 hover:bg-[#EDF2EA] disabled:opacity-50 transition-colors"
+        className="flex min-h-11 w-full items-center justify-center gap-2 rounded-xl bg-forest px-4 text-sm font-semibold text-white transition-colors hover:bg-forest-800 disabled:opacity-50"
       >
         <ChatsCircle size={16} />
         {messaging ? "Opening conversation…" : "Message about this delivery"}
       </button>
 
       {/* Map */}
-      <div className="bg-white border border-[#E3E6ED] rounded-lg overflow-hidden h-[320px]">
+      <div className="h-[300px] overflow-hidden rounded-2xl border border-[#DCE2D9] bg-white shadow-sm sm:h-[360px]">
         <TrackingMap
           trackingNumber={delivery.trackingNumber}
           status={delivery.status}
@@ -214,9 +215,9 @@ export function DeliveryDetailContent({ id, token }: { id: string; token: string
       <VehicleInfoPanel shipment={shipment} />
 
       {/* Delivery info */}
-      <Card className="border-[#E3E6ED] rounded-xl shadow-none bg-white">
+      <Card className="border-[#DCE2D9] rounded-2xl shadow-none bg-white">
         <CardContent className="pt-6">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
             <div className="flex items-start gap-2 min-w-0">
               <MapPin className="h-4 w-4 text-[#173420] mt-0.5 shrink-0" />
               <div className="min-w-0">
@@ -249,7 +250,7 @@ export function DeliveryDetailContent({ id, token }: { id: string; token: string
       </Card>
 
       {/* Package */}
-      <Card className="border-[#E3E6ED] rounded-xl shadow-none bg-white">
+      <Card className="border-[#DCE2D9] rounded-2xl shadow-none bg-white">
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-base text-[#052D50]">
             <Package className="h-5 w-5 text-[#173420]" />
@@ -267,7 +268,7 @@ export function DeliveryDetailContent({ id, token }: { id: string; token: string
       </Card>
 
       {/* Tracking history */}
-      <Card className="border-[#E3E6ED] rounded-xl shadow-none bg-white">
+      <Card className="border-[#DCE2D9] rounded-2xl shadow-none bg-white">
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-base text-[#052D50]">
             <Clock className="h-5 w-5 text-[#173420]" />
@@ -319,7 +320,7 @@ export function DeliveryDetailSheet({ open, id, token, onClose }: DeliveryDetail
 
   return (
     <Sheet open={open} onOpenChange={(o) => { if (!o) onClose(); }}>
-      <SheetContent className="w-full sm:max-w-[599px] p-0 overflow-hidden">
+      <SheetContent className="w-full p-0 overflow-hidden sm:max-w-[680px]">
         <div className="h-full overflow-y-auto p-4 sm:p-6">
           <SheetTitle className="sr-only">Delivery details</SheetTitle>
           <SheetDescription className="sr-only">

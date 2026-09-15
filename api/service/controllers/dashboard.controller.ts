@@ -19,14 +19,16 @@ class DashboardController extends Controller {
       const trackingRepo = AppDataSource.getRepository(TrackingEvent);
 
       const activeDeliveries = await deliveryRepo.count({
-        where: {
-          customerId,
-          status: Not(In(["delivered", "cancelled"])),
-        },
+        where: { customerId, status: Not(In(["delivered", "cancelled"])) },
       });
 
       const pendingPickups = await deliveryRepo.count({
         where: { customerId, status: "pending" },
+      });
+
+      const attentionDelivery = await deliveryRepo.findOne({
+        where: { customerId, status: Not(In(["delivered", "cancelled"])) },
+        order: { updatedAt: "DESC" },
       });
 
       const totalSpentResult = await invoiceRepo
@@ -53,21 +55,19 @@ class DashboardController extends Controller {
 
       let recentActivity: any[] = [];
       if (recentActivityQuery.length > 0) {
-        const deliveryMap = new Map(
-          recentActivityQuery.map((d) => [d.id, d.trackingNumber])
-        );
+        const deliveryMap = new Map(recentActivityQuery.map((delivery) => [delivery.id, delivery.trackingNumber]));
         const events = await trackingRepo.find({
-          where: { deliveryId: In(recentActivityQuery.map((d) => d.id)) },
+          where: { deliveryId: In(recentActivityQuery.map((delivery) => delivery.id)) },
           order: { createdAt: "DESC" } as any,
           take: 6,
         });
-        recentActivity = events.map((e) => ({
-          id: e.id,
-          status: e.status,
-          note: e.note,
-          createdAt: e.createdAt,
-          trackingNumber: deliveryMap.get(e.deliveryId) || "Unknown",
-          deliveryId: e.deliveryId,
+        recentActivity = events.map((event) => ({
+          id: event.id,
+          status: event.status,
+          note: event.note,
+          createdAt: event.createdAt,
+          trackingNumber: deliveryMap.get(event.deliveryId) || "Unknown",
+          deliveryId: event.deliveryId,
         }));
       }
 
@@ -76,6 +76,7 @@ class DashboardController extends Controller {
           activeDeliveries,
           pendingPickups,
           totalSpentCents,
+          attentionDelivery,
           recentDeliveries,
           recentActivity,
         })

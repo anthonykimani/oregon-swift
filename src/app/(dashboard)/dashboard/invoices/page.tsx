@@ -239,26 +239,25 @@ function InvoicesContent() {
 
   return (
     <>
-      <div className="h-full flex flex-col bg-[#F5F4FD] overflow-y-auto">
-        <div className="px-4 sm:px-6 pt-8 pb-4">
-          <h1 className="text-xl font-clash-display font-semibold text-[#173420]">Invoices &amp; Billing</h1>
-          <p className="text-sm text-[#8094A7] font-inter mt-1">
-            View and pay your delivery invoices
-          </p>
+      <div className="h-full flex flex-col bg-[#F3F5F1] overflow-y-auto">
+        <div className="px-4 pt-8 pb-5 sm:px-6 lg:px-8">
+          <p className="text-xs font-bold uppercase tracking-[0.14em] text-forest-600">Billing desk</p>
+          <h1 className="mt-1 text-2xl font-manrope font-semibold tracking-[-0.02em] text-[#173420]">Invoices that need your attention</h1>
+          <p className="mt-1 text-sm text-[#666D80]">Review balances, payment state, and delivery charges.</p>
         </div>
 
         {/* Overview cards */}
-        <div className="px-4 sm:px-6 grid grid-cols-2 xl:grid-cols-4 gap-3 mb-4">
+        <div className="mx-4 mb-4 grid grid-cols-2 gap-1 rounded-2xl border border-[#DCE2D9] bg-white p-2 shadow-sm sm:mx-6 xl:grid-cols-4 lg:mx-8">
           {loading
             ? [...Array(4)].map((_, i) => (
-                <div key={i} className="bg-white border border-[#E3E6ED] rounded-xl p-4 animate-pulse">
+                <div key={i} className="rounded-xl p-4 animate-pulse">
                   <div className="h-3 w-24 bg-[#E3E6ED] rounded mb-5" />
                   <div className="h-7 w-20 bg-[#E3E6ED] rounded mb-2" />
                   <div className="h-3 w-16 bg-[#E3E6ED] rounded" />
                 </div>
               ))
             : summary.map((c) => (
-                <div key={c.key} className="bg-white border border-[#E3E6ED] rounded-xl p-4 shadow-sm">
+                <div key={c.key} className="rounded-xl p-4 transition-colors hover:bg-forest-50">
                   <div className="flex items-center justify-between">
                     <span className="text-xs font-inter text-[#666D80]">{c.label}</span>
                     <span className={`w-8 h-8 rounded-lg flex items-center justify-center ${c.bg} ${c.color}`}>
@@ -276,9 +275,9 @@ function InvoicesContent() {
         </div>
 
         {/* Two-pane: list + detail */}
-        <div className="px-4 sm:px-6 pb-20 grid grid-cols-1 xl:grid-cols-[minmax(0,1fr)_420px] gap-4 items-start">
+        <div className="grid grid-cols-1 items-start gap-4 px-4 pb-20 sm:px-6 lg:px-8 xl:grid-cols-[minmax(0,1fr)_420px]">
           {/* Left: Recent Shipments */}
-          <div className="bg-[#FEFEFE] border border-[#E3E6ED] rounded-[12px] p-4 shadow-sm min-w-0">
+          <div className="min-w-0 overflow-hidden rounded-2xl border border-[#DCE2D9] bg-white p-4 shadow-sm">
             <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3 mb-4">
               <div className="flex items-center gap-1 bg-[#F0F0F0] rounded-lg p-1 overflow-x-auto">
                 {TABS.map((t) => {
@@ -483,7 +482,7 @@ function InvoicesContent() {
               <>
                 <div className="flex items-start justify-between gap-3">
                   <div className="min-w-0">
-                    <h2 className="text-lg font-clash-display font-semibold text-[#173420] truncate">
+                    <h2 className="text-lg font-manrope font-semibold text-[#173420] truncate">
                       Invoice {detail.number}
                     </h2>
                     <p className="text-xs text-[#8094A7] mt-0.5">
@@ -619,7 +618,7 @@ function InvoicesContent() {
 export default function InvoicesPage() {
   return (
     <Suspense fallback={
-      <div className="h-full flex items-center justify-center bg-[#F5F4FD]">
+      <div className="h-full flex items-center justify-center bg-[#F3F5F1]">
         <p className="text-sm text-[#8094A7] font-inter">Loading...</p>
       </div>
     }>

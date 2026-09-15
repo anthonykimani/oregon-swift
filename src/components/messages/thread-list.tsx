@@ -45,7 +45,7 @@ export function ThreadList({
   canStartNew: boolean;
 }) {
   return (
-    <div className="h-full flex flex-col bg-white border border-[#E3E6ED] rounded-xl overflow-hidden shadow-sm">
+    <div className="h-full flex flex-col bg-white border border-[#DCE2D9] rounded-2xl overflow-hidden shadow-sm">
       <div className="flex items-center justify-between px-4 py-3 border-b border-[#E3E6ED]">
         <h2 className="text-sm font-manrope font-bold text-[#161618]">Messages</h2>
         {canStartNew && (
@@ -64,7 +64,7 @@ export function ThreadList({
         {loading ? (
           <div className="space-y-2 p-3">
             {[...Array(5)].map((_, i) => (
-              <div key={i} className="h-16 bg-[#F5F4FD] rounded-xl animate-pulse" />
+              <div key={i} className="h-16 bg-[#F3F5F1] rounded-xl animate-pulse" />
             ))}
           </div>
         ) : threads.length === 0 ? (

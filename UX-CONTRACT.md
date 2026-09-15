@@ -19,8 +19,42 @@ exist must stay reachable from the sidebar.
   the exact root, not on every child route.
 - The header title resolves from the active nav item (both primary and bottom
   nav) and falls back to the role default.
+- The header identifies the active role workspace and keeps its primary action
+  and account control in stable positions across route changes.
+- On mobile, opening navigation locks background scrolling, moves focus into
+  the drawer, traps Tab navigation, closes with Escape or the scrim, and
+  restores focus to the menu trigger.
+- The sidebar identity block exposes the current account name and email and
+  links to that role's established account destination.
 - Section "Soon" markers exist in `AppShell` but must not be used to hide
   routes that are reachable, unless product explicitly deprecates them.
+
+## Customer overview
+
+- `/dashboard` leads with the authenticated customer's most recently updated
+  active delivery. Active excludes `delivered` and `cancelled`; no other
+  urgency ranking is inferred.
+- When no active delivery exists, the same reserved region presents an
+  all-clear state and a route to book a delivery.
+- Summary metrics navigate to their owning delivery or invoice area.
+- Recent delivery and activity rows open the existing delivery detail sheet.
+- Dashboard-stat failures provide an inline retry action, ignore stale
+  responses, and preserve the overview's loading geometry.
+
+## Customer workspace
+
+- Booking remains a three-step route, package, and review flow; the estimate
+  and final action retain stable positions and duplicate submission is blocked.
+- Delivery records preserve tab, search, sort, pagination, URL-selected detail,
+  and click-to-open behavior. Every visible toolbar control performs a real
+  action.
+- Invoice records preserve status filtering, selection, download, send, and
+  payment behavior. Detail remains visible beside the list on wide screens.
+- Messages preserve URL-addressable thread selection and switch between list
+  and conversation on narrow screens.
+- Customer and courier delivery details are full-screen on narrow viewports and
+  a right-hand sheet on larger screens. Radix owns focus containment, Escape,
+  outside dismissal, scroll locking, and trigger-focus restoration.
 
 ## Messaging
 
@@ -41,6 +75,12 @@ exist must stay reachable from the sidebar.
 
 - Sign out calls `signOut({ callbackUrl: "/sign-in" })` from every role's
   bottom nav.
+- Every explicit **Sign in with Google** action sends `prompt=select_account`
+  so Google presents its account chooser, even when a Google browser session
+  is already active.
+- Oregon Swift sign out clears only the application's session. It must not
+  revoke Google access, clear Google cookies, or sign the user out of other
+  Google services.
 
 ## Responsive shell
 

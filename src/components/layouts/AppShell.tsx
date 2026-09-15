@@ -1,15 +1,10 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useSession, signOut } from "next-auth/react";
-import {
-  CaretLeft,
-  CaretRight,
-  SignOut,
-  type Icon,
-} from "@phosphor-icons/react";
+import { CaretRight, List, X, type Icon } from "@phosphor-icons/react";
 import { cn } from "@/lib/utils";
 import { useUnreadCount } from "@/lib/messaging/use-unread-count";
 import { BrandMark } from "./BrandMark";
@@ -18,11 +13,8 @@ export interface AppNavItem {
   name: string;
   icon: Icon;
   path?: string;
-  /** Renders a sign-out action instead of a link. */
   action?: "logout";
-  /** Shows the live unread count from the messaging service. */
   badge?: "messages";
-  /** Unfinished area: rendered disabled with a "Soon" marker. */
   soon?: boolean;
 }
 
@@ -41,7 +33,6 @@ export interface AppHeaderAction {
 interface AppShellProps {
   navSections: AppNavSection[];
   bottomNav?: AppNavItem[];
-  /** Optional override; defaults to the active nav item's label. */
   pageTitle?: string;
   fallbackTitle?: string;
   headerAction?: AppHeaderAction;
@@ -52,19 +43,17 @@ interface AppShellProps {
 }
 
 function isItemActive(pathname: string, path: string, roots: string[]) {
-  const root = roots.find((r) => path === r || path.startsWith(`${r}/`));
-  if (root) {
-    if (path === root) return pathname === root || pathname === `${root}/`;
-    return pathname.startsWith(path);
-  }
-  return pathname.startsWith(path);
+  const root = roots.find((candidate) => path === candidate || path.startsWith(`${candidate}/`));
+  if (!root) return pathname.startsWith(path);
+  return path === root ? pathname === root || pathname === `${root}/` : pathname.startsWith(path);
 }
 
-/**
- * One application shell for admin, customer, and courier roles. Owns the
- * shared brand lock-up, sidebar navigation, mobile overlay, header, and
- * account affordances so the three products read as a single system.
- */
+function workspaceFor(pathname: string) {
+  if (pathname.startsWith("/admin")) return "Dispatch control";
+  if (pathname.startsWith("/courier")) return "Courier field desk";
+  return "Customer workspace";
+}
+
 export function AppShell({
   navSections,
   bottomNav = [],
@@ -79,231 +68,135 @@ export function AppShell({
   const pathname = usePathname();
   const { data: session } = useSession();
   const { unreadCount } = useUnreadCount(session?.accessToken);
-  const [sidebarOpen, setSidebarOpen] = useState(
-    () =>
-      typeof window !== "undefined" &&
-      window.matchMedia("(min-width: 1024px)").matches
-  );
+  const [navigationOpen, setNavigationOpen] = useState(false);
+  const drawerRef = useRef<HTMLElement>(null);
+  const menuButtonRef = useRef<HTMLButtonElement>(null);
+  const allItems = [...navSections.flatMap((section) => section.items), ...bottomNav];
+  const roots = allItems.map((item) => item.path).filter((path): path is string => Boolean(path));
+  const activeItem = allItems.find((item) => item.path && isItemActive(pathname, item.path, roots));
+  const title = pageTitle ?? activeItem?.name ?? fallbackTitle;
+  const workspace = workspaceFor(pathname);
+  const firstName = session?.user?.firstname || session?.user?.name?.split(" ")[0] || "Account";
+  const email = session?.user?.email || "View your profile";
 
   useEffect(() => {
-    const mq = window.matchMedia("(min-width: 1024px)");
-    const handler = (e: MediaQueryListEvent) => setSidebarOpen(e.matches);
-    mq.addEventListener("change", handler);
-    return () => mq.removeEventListener("change", handler);
-  }, []);
-
-  const allItems = [
-    ...navSections.flatMap((s) => s.items),
-    ...bottomNav,
-  ];
-
-  const roots = allItems
-    .map((i) => i.path)
-    .filter((p): p is string => Boolean(p));
-
-  const activeItem = allItems.find(
-    (i) => i.path && isItemActive(pathname, i.path, roots)
-  );
-
-  const title = pageTitle ?? activeItem?.name ?? fallbackTitle;
+    if (!navigationOpen) return;
+    const drawer = drawerRef.current;
+    const menuButton = menuButtonRef.current;
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    const focusable = drawer?.querySelectorAll<HTMLElement>('a[href], button:not([disabled]), [tabindex]:not([tabindex="-1"])');
+    focusable?.[0]?.focus();
+    function handleKeyDown(event: KeyboardEvent) {
+      if (event.key === "Escape") return setNavigationOpen(false);
+      if (event.key !== "Tab" || !focusable?.length) return;
+      const first = focusable[0];
+      const last = focusable[focusable.length - 1];
+      if (event.shiftKey && document.activeElement === first) {
+        event.preventDefault();
+        last.focus();
+      } else if (!event.shiftKey && document.activeElement === last) {
+        event.preventDefault();
+        first.focus();
+      }
+    }
+    document.addEventListener("keydown", handleKeyDown);
+    return () => {
+      document.body.style.overflow = previousOverflow;
+      document.removeEventListener("keydown", handleKeyDown);
+      menuButton?.focus();
+    };
+  }, [navigationOpen]);
 
   return (
-    <div className="h-screen flex overflow-hidden bg-white">
-      <aside
-        aria-label="Primary"
-        className={cn(
-          "fixed lg:static z-50 inset-y-0 left-0 flex-shrink-0 flex flex-col bg-white border-r border-[#DFE1E7] transition-all duration-300 overflow-hidden",
-          sidebarOpen ? "w-[272px]" : "w-0 lg:w-[272px]"
-        )}
-      >
-        <div className="flex items-center justify-between px-4 h-20 border-b border-[#DFE1E7]">
-          <BrandMark href={userHref} />
-          <button
-            onClick={() => setSidebarOpen(!sidebarOpen)}
-            aria-label={sidebarOpen ? "Collapse sidebar" : "Expand sidebar"}
-            className="w-6 h-6 flex items-center justify-center rounded-md border border-[#DFE1E7] hover:bg-forest-50 transition-colors"
-          >
-            {sidebarOpen ? (
-              <CaretLeft size={14} color="#173420" />
-            ) : (
-              <CaretRight size={14} color="#173420" />
-            )}
+    <div className="flex h-dvh overflow-hidden bg-[#F3F5F1] font-manrope text-[#161618]">
+      <aside ref={drawerRef} aria-label="Primary" className={cn(
+        "fixed inset-y-0 left-0 z-50 flex w-[280px] shrink-0 flex-col overflow-hidden border-r border-white/10 bg-forest text-white shadow-2xl transition-transform duration-300 ease-out lg:static lg:z-auto lg:translate-x-0 lg:shadow-none",
+        navigationOpen ? "translate-x-0" : "-translate-x-full"
+      )}>
+        <div className="flex h-24 items-center justify-between border-b border-white/10 px-5">
+          <div>
+            <BrandMark href={userHref} tone="inverse" />
+            <p className="mt-1 pl-[42px] text-[11px] font-semibold uppercase tracking-[0.18em] text-white/45">{workspace}</p>
+          </div>
+          <button type="button" onClick={() => setNavigationOpen(false)} aria-label="Close navigation" className="flex size-11 items-center justify-center rounded-xl text-white/70 hover:bg-white/10 hover:text-white lg:hidden">
+            <X size={20} weight="bold" />
           </button>
         </div>
 
-        <nav className="flex-1 overflow-y-auto px-3 py-4 space-y-6">
-          {navSections.map((section, sectionIndex) => (
-            <div key={section.label ?? sectionIndex}>
-              {section.label && (
-                <p className="font-manrope text-xs uppercase tracking-wide text-[#A4ACB9] px-3 mb-1.5">
-                  {section.label}
-                </p>
-              )}
-              <ul className="space-y-0.5">
-                {section.items.map((item) => (
-                  <li key={item.name}>
-                    <NavRow
-                      item={item}
-                      active={
-                        item.path
-                          ? isItemActive(pathname, item.path, roots)
-                          : false
-                      }
-                      unreadCount={unreadCount}
-                    />
-                  </li>
-                ))}
-              </ul>
-            </div>
-          ))}
-        </nav>
-
-        {bottomNav.length > 0 && (
-          <div className="px-3 pb-4 space-y-0.5 border-t border-[#DFE1E7] pt-2">
-            {bottomNav.map((item) => (
-              <NavRow
-                key={item.name}
-                item={item}
-                active={false}
-                unreadCount={unreadCount}
-              />
+        <nav className="min-h-0 flex-1 overflow-y-auto px-3 py-5">
+          <div className="space-y-7">
+            {navSections.map((section, index) => (
+              <section key={section.label ?? index} aria-label={section.label}>
+                {section.label && <p className="mb-2 px-3 text-xs font-bold uppercase tracking-[0.14em] text-white/40">{section.label}</p>}
+                <ul className="space-y-1">
+                  {section.items.map((item) => (
+                    <li key={item.name}>
+                      <NavRow item={item} active={Boolean(item.path && isItemActive(pathname, item.path, roots))} unreadCount={unreadCount} onNavigate={() => setNavigationOpen(false)} />
+                    </li>
+                  ))}
+                </ul>
+              </section>
             ))}
           </div>
-        )}
+        </nav>
 
+        <div className="border-t border-white/10 p-3">
+          <Link href={userHref} onClick={() => setNavigationOpen(false)} className="mb-2 flex min-h-16 items-center gap-3 rounded-2xl bg-white/[0.07] px-3 py-2.5 hover:bg-white/[0.12]">
+            <span className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-sun-500 text-sm font-extrabold text-forest">{userInitial}</span>
+            <span className="min-w-0 flex-1">
+              <span className="block truncate text-sm font-semibold text-white">{firstName}</span>
+              <span className="block truncate text-xs text-white/50">{email}</span>
+            </span>
+            <CaretRight size={15} className="shrink-0 text-white/35" />
+          </Link>
+          <div className="space-y-1">
+            {bottomNav.filter((item) => item.path !== userHref).map((item) => <NavRow key={item.name} item={item} active={Boolean(item.path && isItemActive(pathname, item.path, roots))} unreadCount={unreadCount} onNavigate={() => setNavigationOpen(false)} />)}
+          </div>
+        </div>
       </aside>
 
-      {/* Rendered outside the drawer so it dims and captures taps on the
-          content behind it without covering the navigation itself. */}
-      {sidebarOpen && (
-        <button
-          aria-label="Close navigation"
-          className="fixed lg:hidden inset-0 z-40 bg-black/20"
-          onClick={() => setSidebarOpen(false)}
-        />
-      )}
+      {navigationOpen && <button type="button" aria-label="Close navigation" className="fixed inset-0 z-40 bg-[#08170e]/55 backdrop-blur-[2px] lg:hidden" onClick={() => setNavigationOpen(false)} />}
 
-      <div className="flex-1 flex flex-col overflow-hidden">
-        <header className="flex items-center justify-between gap-3 px-4 sm:px-5 h-[79px] bg-white border-b border-[#E3E6ED]">
-          <div className="flex items-center gap-3 min-w-0">
-            <button
-              onClick={() => setSidebarOpen(!sidebarOpen)}
-              aria-label={sidebarOpen ? "Close navigation" : "Open navigation"}
-              aria-expanded={sidebarOpen}
-              className="lg:hidden w-8 h-8 flex items-center justify-center rounded-md border border-[#DFE1E7] shrink-0"
-            >
-              <CaretRight size={14} color="#173420" />
+      <div className="flex min-w-0 flex-1 flex-col overflow-hidden">
+        <header className="flex h-20 shrink-0 items-center justify-between gap-4 border-b border-[#DCE2D9] bg-[#FBFCFA]/95 px-4 backdrop-blur sm:px-6 lg:px-8">
+          <div className="flex min-w-0 items-center gap-3">
+            <button ref={menuButtonRef} type="button" onClick={() => setNavigationOpen(true)} aria-label="Open navigation" aria-expanded={navigationOpen} className="flex size-11 shrink-0 items-center justify-center rounded-xl border border-[#D7DED4] bg-white text-forest hover:bg-forest-50 lg:hidden">
+              <List size={21} weight="bold" />
             </button>
-            <h1 className="text-xl sm:text-2xl text-[#161618] truncate">
-              {title}
-            </h1>
+            <div className="min-w-0">
+              <p className="hidden text-xs font-bold uppercase tracking-[0.14em] text-forest-600 sm:block">{workspace}</p>
+              <h1 className="truncate text-xl font-semibold tracking-[-0.02em] text-[#161618] sm:text-2xl">{title}</h1>
+            </div>
           </div>
-
-          <div className="flex items-center gap-2 sm:gap-3 shrink-0">
+          <div className="flex shrink-0 items-center gap-2 sm:gap-3">
             {headerSlot}
             {headerAction && (
-              <Link
-                href={headerAction.href}
-                className="inline-flex items-center gap-2 h-10 px-3 sm:px-4 rounded-xl bg-sun-500 hover:bg-sun-400 text-forest text-sm font-medium whitespace-nowrap transition-colors"
-              >
+              <Link href={headerAction.href} className="inline-flex h-11 items-center gap-2 rounded-xl bg-sun-500 px-3.5 text-sm font-bold text-forest shadow-[0_6px_18px_rgba(243,188,36,0.2)] transition-[background-color,transform,box-shadow] hover:-translate-y-0.5 hover:bg-sun-400 hover:shadow-[0_8px_22px_rgba(243,188,36,0.28)] sm:px-4">
                 <headerAction.icon size={18} weight="bold" />
-                <span className="hidden sm:inline">{headerAction.label}</span>
-                <span className="sm:hidden">
-                  {headerAction.shortLabel ?? headerAction.label}
-                </span>
+                <span className="hidden sm:inline">{headerAction.label}</span><span className="sm:hidden">{headerAction.shortLabel ?? headerAction.label}</span>
               </Link>
             )}
-            <Link
-              href={userHref}
-              aria-label="Account"
-              className="w-10 h-10 rounded-full bg-forest flex items-center justify-center text-white text-sm font-semibold shrink-0"
-            >
-              {userInitial}
-            </Link>
+            <Link href={userHref} aria-label={`Account: ${firstName}`} title={email} className="flex size-11 items-center justify-center rounded-xl border border-forest-200 bg-white text-sm font-extrabold text-forest hover:bg-forest-50">{userInitial}</Link>
           </div>
         </header>
-
-        <main className="flex-1 overflow-y-auto">{children}</main>
+        <main className="min-h-0 flex-1 overflow-y-auto bg-[#F3F5F1]">{children}</main>
       </div>
     </div>
   );
 }
 
-function NavRow({
-  item,
-  active,
-  unreadCount,
-}: {
-  item: AppNavItem;
-  active: boolean;
-  unreadCount: number;
-}) {
+function NavRow({ item, active, unreadCount, onNavigate }: { item: AppNavItem; active: boolean; unreadCount: number; onNavigate: () => void }) {
   const Icon = item.icon;
-
-  const inner = (
-    <>
-      {active && !item.soon && (
-        <span className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-6 rounded-r bg-forest" />
-      )}
-      <Icon size={20} weight={active && !item.soon ? "fill" : "regular"} />
-      <span className="flex-1">{item.name}</span>
-      {item.badge === "messages" && unreadCount > 0 && (
-        <span className="h-[18px] min-w-[18px] px-1 flex items-center justify-center rounded-full bg-[#C0392B] text-white text-xs font-bold">
-          {unreadCount > 99 ? "99+" : unreadCount}
-        </span>
-      )}
-      {item.soon ? (
-        <span className="rounded-full border border-[#E3E6ED] bg-[#F9F9F9] px-2 py-0.5 text-xs font-medium text-[#8094A7]">
-          Soon
-        </span>
-      ) : (
-        <CaretRight size={12} className="text-inherit opacity-50" />
-      )}
-    </>
-  );
-
-  const base =
-    "relative flex items-center gap-3 px-3 py-2.5 rounded-lg text-base font-manrope transition-colors";
-
-  if (item.soon) {
-    return (
-      <span
-        aria-disabled="true"
-        title={`${item.name} is coming soon`}
-        className={cn(base, "text-[#A4ACB9] cursor-not-allowed")}
-      >
-        {inner}
-      </span>
-    );
-  }
-
-  const isLogout = item.action === "logout";
-
-  if (isLogout) {
-    return (
-      <button
-        onClick={() => signOut({ callbackUrl: "/sign-in" })}
-        className={cn(
-          base,
-          "w-full text-forest hover:bg-forest-100"
-        )}
-      >
-        {inner}
-      </button>
-    );
-  }
-
-  return (
-    <Link
-      href={item.path ?? "#"}
-      className={cn(
-        base,
-        active
-          ? "bg-forest-100 text-forest font-medium"
-          : "text-[#666D80] hover:bg-forest-100 hover:text-[#666D80]"
-      )}
-    >
-      {inner}
-    </Link>
-  );
+  const base = "group relative flex min-h-11 w-full items-center gap-3 rounded-xl px-3 text-sm font-semibold transition-colors";
+  const inner = <>
+    {active && !item.soon && <span className="absolute -left-3 top-2.5 h-6 w-1 rounded-r-full bg-sun-500" />}
+    <span className={cn("flex size-8 shrink-0 items-center justify-center rounded-lg", active && !item.soon ? "bg-white/10 text-sun-300" : "text-white/55 group-hover:text-white")}><Icon size={19} weight={active && !item.soon ? "fill" : "regular"} /></span>
+    <span className="min-w-0 flex-1 truncate text-left">{item.name}</span>
+    {item.badge === "messages" && unreadCount > 0 && <span aria-label={`${unreadCount} unread messages`} className="flex h-5 min-w-5 items-center justify-center rounded-full bg-sun-500 px-1.5 text-xs font-extrabold text-forest">{unreadCount > 99 ? "99+" : unreadCount}</span>}
+    {item.soon ? <span className="rounded-full border border-white/15 px-2 py-0.5 text-xs text-white/45">Soon</span> : item.action !== "logout" ? <CaretRight size={13} className="shrink-0 text-white/25 transition-transform group-hover:translate-x-0.5 group-hover:text-white/55" /> : null}
+  </>;
+  if (item.soon) return <span aria-disabled="true" title={`${item.name} is coming soon`} className={cn(base, "cursor-not-allowed text-white/35")}>{inner}</span>;
+  if (item.action === "logout") return <button type="button" onClick={() => signOut({ callbackUrl: "/sign-in" })} className={cn(base, "text-white/65 hover:bg-white/[0.08] hover:text-white")}>{inner}</button>;
+  return <Link href={item.path ?? "#"} onClick={onNavigate} aria-current={active ? "page" : undefined} className={cn(base, active ? "bg-white/[0.1] text-white" : "text-white/65 hover:bg-white/[0.07] hover:text-white")}>{inner}</Link>;
 }

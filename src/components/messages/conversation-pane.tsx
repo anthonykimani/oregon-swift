@@ -129,7 +129,7 @@ export function ConversationPane({
 
   if (!conversationId) {
     return (
-      <div className="h-full flex items-center justify-center bg-[#F5F4FD]">
+      <div className="h-full flex items-center justify-center bg-[#F3F5F1]">
         <div className="text-center">
           <ChatsCircle size={40} className="mx-auto text-[#E3E6ED] mb-3" />
           <p className="text-sm font-manrope text-[#8094A7]">Select a conversation to start chatting</p>
@@ -158,7 +158,7 @@ export function ConversationPane({
   };
 
   return (
-    <div className="h-full flex flex-col min-h-0 bg-white border border-[#E3E6ED] rounded-xl overflow-hidden shadow-sm">
+    <div className="h-full flex flex-col min-h-0 bg-white border border-[#DCE2D9] rounded-2xl overflow-hidden shadow-sm">
       {/* Header */}
       <div className="flex items-center gap-3 px-4 py-3 border-b border-[#E3E6ED] bg-[#f9f9fb]">
         {onClose && (
@@ -192,7 +192,7 @@ export function ConversationPane({
       </div>
 
       {/* Messages */}
-      <ScrollArea className="flex-1 min-h-0 px-4 py-4 bg-[#F5F4FD]">
+      <ScrollArea className="flex-1 min-h-0 px-4 py-4 bg-[#F3F5F1]">
         {loading ? (
           <div className="space-y-4">
             {[...Array(4)].map((_, i) => (
@@ -254,7 +254,7 @@ export function ConversationPane({
             }}
             placeholder="Type a message…"
             rows={1}
-            className="min-h-[40px] max-h-[120px] resize-none bg-[#F5F4FD] border-[#E3E6ED] rounded-xl text-sm text-[#333333] placeholder:text-[#8094A7]"
+            className="min-h-[40px] max-h-[120px] resize-none bg-[#F3F5F1] border-[#DCE2D9] rounded-2xl text-sm text-[#333333] placeholder:text-[#8094A7]"
           />
           <button
             type="button"

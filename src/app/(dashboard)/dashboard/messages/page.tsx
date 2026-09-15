@@ -31,7 +31,7 @@ export default function CustomerMessagesPage() {
 
 function PageFallback() {
   return (
-    <div className="h-full flex items-center justify-center bg-[#F5F4FD]">
+    <div className="h-full flex items-center justify-center bg-[#F3F5F1]">
       <p className="text-sm text-[#8094A7]">Loading messages...</p>
     </div>
   );

@@ -71,7 +71,11 @@ function SignInForm() {
 
   async function handleGoogleSignIn() {
     setGoogleLoading(true);
-    await signIn("google", { callbackUrl: "/sign-in" });
+    await signIn(
+      "google",
+      { callbackUrl: "/sign-in" },
+      { prompt: "select_account" }
+    );
   }
 
   return (

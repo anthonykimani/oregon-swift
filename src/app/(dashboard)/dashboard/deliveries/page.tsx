@@ -11,8 +11,6 @@ import {
   CaretDown,
   DotsThree,
   MagnifyingGlass,
-  Funnel,
-  CalendarBlank,
   ArrowsDownUp,
 } from "@phosphor-icons/react";
 import { api } from "@/lib/api";
@@ -158,12 +156,14 @@ function DeliveriesContent() {
 
   return (
     <>
-      <div className="h-full flex flex-col bg-[#F5F4FD] overflow-y-auto">
-        <div className="px-4 sm:px-6 pt-8 pb-4">
-          <h1 className="text-xl font-clash-display font-semibold text-[#173420]">My Deliveries</h1>
+      <div className="h-full flex flex-col bg-[#F3F5F1] overflow-y-auto">
+        <div className="px-4 pt-8 pb-5 sm:px-6 lg:px-8">
+          <p className="text-xs font-bold uppercase tracking-[0.14em] text-forest-600">Delivery history</p>
+          <h1 className="mt-1 text-2xl font-manrope font-semibold tracking-[-0.02em] text-[#173420]">Every shipment, one clear view</h1>
+          <p className="mt-1 text-sm text-[#666D80]">Track active work and review completed deliveries.</p>
         </div>
 
-        <div className="px-4 sm:px-6 pb-20">
+        <div className="px-4 pb-20 sm:px-6 lg:px-8">
           {justCreated && (
             <div className="bg-[#D9F9E7] text-[#007837] text-sm rounded-lg px-4 py-3 mb-4">
               Delivery booked successfully! You can track it below.
@@ -193,9 +193,9 @@ function DeliveriesContent() {
               </Link>
             </div>
           ) : (
-            <div className="bg-[#FEFEFE] border border-[#E3E6ED] rounded-[12px] p-4 shadow-sm">
+            <div className="overflow-hidden rounded-2xl border border-[#DCE2D9] bg-white shadow-sm">
               {/* Toolbar */}
-              <div className="flex flex-col xl:flex-row xl:items-center justify-between gap-3 mb-4">
+              <div className="flex flex-col gap-3 border-b border-[#E5E9E2] p-4 xl:flex-row xl:items-center xl:justify-between">
                 <div className="flex items-center gap-1 bg-[#F0F0F0] rounded-lg p-1 overflow-x-auto">
                   {TABS.map((t) => {
                     const active = activeTab === t.key;
@@ -225,23 +225,6 @@ function DeliveriesContent() {
                       className="h-9 w-full sm:w-[220px] pl-9 pr-3 bg-[#F0F0F0] rounded-lg text-xs font-manrope text-[#333333] placeholder:text-[#757575] focus:outline-none focus:ring-1 focus:ring-[#173420]"
                     />
                   </div>
-
-                  <button
-                    type="button"
-                    className="relative h-9 px-3 bg-[#F0F0F0] rounded-lg text-xs font-manrope text-[#333333] flex items-center gap-1.5"
-                    title="Filter"
-                  >
-                    <Funnel size={14} /> Filter
-                    <span className="absolute -top-0.5 -right-0.5 w-2 h-2 rounded-full bg-[#F04A4A]" />
-                  </button>
-
-                  <button
-                    type="button"
-                    className="h-9 px-3 bg-[#F0F0F0] rounded-lg text-xs font-manrope text-[#333333] flex items-center gap-1.5"
-                    title="Date range"
-                  >
-                    <CalendarBlank size={14} /> This Month <CaretDown size={12} />
-                  </button>
 
                   <div className="flex items-center gap-1.5">
                     <span className="text-xs font-manrope text-[#6E6F78]">Sort by:</span>
@@ -278,10 +261,6 @@ function DeliveriesContent() {
                     </div>
                   </div>
 
-                  <button type="button" className="w-9 h-9 bg-[#F0F0F0] rounded-lg flex items-center justify-center text-[#333333]" title="More">
-                    <DotsThree size={16} />
-                  </button>
-
                   <Link
                     href="/dashboard/book"
                     className="h-9 px-4 bg-[#173420] hover:bg-[#1F4228] text-white rounded-lg text-xs font-manrope font-medium flex items-center gap-1.5 transition-colors"
@@ -292,7 +271,7 @@ function DeliveriesContent() {
               </div>
 
               {/* Table */}
-              <div className="overflow-x-auto">
+              <div className="overflow-x-auto px-4 pb-4">
                 <table className="w-full min-w-[980px]">
                   <thead>
                     <tr className="border-b border-[#E0E0E0]">
@@ -479,7 +458,7 @@ function DeliveriesContent() {
 export default function MyDeliveriesPage() {
   return (
     <Suspense fallback={
-      <div className="h-full flex items-center justify-center bg-[#F5F4FD]">
+      <div className="h-full flex items-center justify-center bg-[#F3F5F1]">
         <p className="text-sm text-[#8094A7] font-inter">Loading...</p>
       </div>
     }>

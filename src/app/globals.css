@@ -167,9 +167,39 @@
   body {
     @apply bg-background text-foreground font-sans;
   }
+  html {
+    scrollbar-color: #8fa397 #edf2ea;
+    scrollbar-width: thin;
+  }
+  *::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+  }
+  *::-webkit-scrollbar-track {
+    background: #edf2ea;
+  }
+  *::-webkit-scrollbar-thumb {
+    background: #8fa397;
+    border: 2px solid #edf2ea;
+    border-radius: 999px;
+  }
+  *::-webkit-scrollbar-thumb:hover {
+    background: #5f7b68;
+  }
   /* One keyboard focus treatment for the whole product. */
   :focus-visible {
     outline: 2px solid #173420;
     outline-offset: 2px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
   }
 }

@@ -94,8 +94,8 @@ export function MessagesView({
   }
 
   return (
-    <div className="flex flex-col lg:flex-row gap-0 lg:gap-[10px] h-full min-h-0 bg-[#F5F4FD]">
-      <div className={`${activeId ? "hidden lg:flex" : "flex"} flex-col lg:w-[320px] lg:shrink-0 min-h-0`}>
+    <div data-message-role={myRole} className="flex h-full min-h-0 flex-col gap-3 bg-[#F3F5F1] p-3 sm:p-5 lg:flex-row lg:gap-4 lg:p-6">
+      <div className={`${activeId ? "hidden lg:flex" : "flex"} min-h-0 flex-col lg:w-[340px] lg:shrink-0`}>
         <div className="flex-1 min-h-0">
           <ThreadList
             threads={threads}

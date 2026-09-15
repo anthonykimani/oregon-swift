@@ -1,30 +1,29 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useSession } from "next-auth/react";
 import Link from "next/link";
 import {
-  Plus,
-  DotsThree,
-  Cube,
-  Truck,
-  Clock,
   ArrowRight,
   CheckCircle,
-  Package,
+  Clock,
+  Cube,
   MapPin,
+  Package,
+  Path,
+  Receipt,
+  TrendUp,
+  Truck,
+  WarningCircle,
 } from "@phosphor-icons/react";
-import { Button } from "@/components/ui/button";
 import { api } from "@/lib/api";
 import { DeliveryDetailSheet } from "@/components/customer/delivery-detail-sheet";
-
-interface DashboardStats {
-  activeDeliveries: number;
-  pendingPickups: number;
-  totalSpentCents: number;
-  recentDeliveries: DeliveryItem[];
-  recentActivity: ActivityItem[];
-}
+import { StatusBadge } from "@/components/ui/status-badge";
+import {
+  progressForStatus,
+  statusLabels,
+  statusVariants,
+} from "@/components/shared/tracking/types";
 
 interface DeliveryItem {
   id: string;
@@ -34,6 +33,8 @@ interface DeliveryItem {
   dropoffAddress: string;
   packageDesc: string;
   createdAt: string;
+  updatedAt: string;
+  scheduledDate?: string | null;
 }
 
 interface ActivityItem {
@@ -45,80 +46,72 @@ interface ActivityItem {
   deliveryId: string;
 }
 
-const statusLabels: Record<string, string> = {
-  pending: "Pending",
-  processing: "Processing",
-  "in-transit": "In Transit",
-  "out-for-delivery": "Out for Delivery",
-  delivered: "Delivered",
-  cancelled: "Cancelled",
-};
+interface DashboardStats {
+  activeDeliveries: number;
+  pendingPickups: number;
+  totalSpentCents: number;
+  attentionDelivery: DeliveryItem | null;
+  recentDeliveries: DeliveryItem[];
+  recentActivity: ActivityItem[];
+}
 
 const activityIcons: Record<string, React.ReactNode> = {
-  pending: <Clock size={18} className="text-[#B8860B]" />,
-  processing: <Package size={18} className="text-[#235BC2]" />,
-  "in-transit": <Truck size={18} className="text-[#333333]" />,
-  "out-for-delivery": <Truck size={18} className="text-[#F04A4A]" />,
-  delivered: <CheckCircle size={18} className="text-[#007837]" />,
-  cancelled: <Package size={18} className="text-[#999999]" />,
+  pending: <Clock size={18} weight="bold" />,
+  processing: <Package size={18} weight="bold" />,
+  "picked-up": <Truck size={18} weight="bold" />,
+  "in-transit": <Truck size={18} weight="bold" />,
+  "out-for-delivery": <Path size={18} weight="bold" />,
+  delivered: <CheckCircle size={18} weight="fill" />,
+  "failed-attempt": <WarningCircle size={18} weight="fill" />,
+  cancelled: <Package size={18} />,
 };
 
-const activityBg: Record<string, string> = {
-  pending: "bg-[#FFF3D6]",
-  processing: "bg-[#E3EDFF]",
-  "in-transit": "bg-[#F0F0F0]",
-  "out-for-delivery": "bg-[#FCDEE0]",
-  delivered: "bg-[#D9F9E7]",
-  cancelled: "bg-[#F0F0F0]",
+const activityTone: Record<string, string> = {
+  pending: "bg-sun-100 text-[#8a5a00]",
+  processing: "bg-[#e3edff] text-[#235bc2]",
+  "picked-up": "bg-forest-100 text-forest",
+  "in-transit": "bg-forest-100 text-forest",
+  "out-for-delivery": "bg-sun-100 text-[#8a5a00]",
+  delivered: "bg-[#d9f9e7] text-[#007837]",
+  "failed-attempt": "bg-[#fcdee0] text-[#c0392b]",
+  cancelled: "bg-[#f0f0f0] text-[#666d80]",
 };
 
 function timeAgo(dateStr: string) {
-  const diff = Date.now() - new Date(dateStr).getTime();
+  const diff = Math.max(0, Date.now() - new Date(dateStr).getTime());
   const mins = Math.floor(diff / 60000);
   if (mins < 1) return "just now";
   if (mins < 60) return `${mins}m ago`;
   const hours = Math.floor(mins / 60);
   if (hours < 24) return `${hours}h ago`;
-  const days = Math.floor(hours / 24);
-  return `${days}d ago`;
+  return `${Math.floor(hours / 24)}d ago`;
 }
 
 function formatDate(dateStr: string) {
-  return new Date(dateStr).toLocaleDateString("en-US", {
-    month: "short", day: "numeric", year: "numeric",
-  });
+  const date = new Date(dateStr);
+  if (Number.isNaN(date.getTime())) return "Date unavailable";
+  return date.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
 }
 
 function formatCents(cents: number) {
   return `$${(cents / 100).toLocaleString("en-US", { minimumFractionDigits: 2 })}`;
 }
 
-const progressByStatus: Record<string, number> = {
-  pending: 10,
-  processing: 20,
-  "picked-up": 35,
-  "in-transit": 60,
-  "out-for-delivery": 80,
-  delivered: 100,
-  "failed-attempt": 40,
-  cancelled: 0,
-};
+function shortAddress(address: string) {
+  return address?.split(",")[0]?.trim() || "Address unavailable";
+}
 
-const statusPillStyles: Record<string, { bg: string; text: string }> = {
-  pending: { bg: "bg-[#FFF3D6]", text: "text-[#B8860B]" },
-  processing: { bg: "bg-[#E3EDFF]", text: "text-[#235BC2]" },
-  "in-transit": { bg: "bg-[#E0E0E0]", text: "text-[#333333]" },
-  "out-for-delivery": { bg: "bg-[#FCDEE0]", text: "text-[#F04A4A]" },
-  delivered: { bg: "bg-[#D9F9E7]", text: "text-[#007837]" },
-  cancelled: { bg: "bg-[#F0F0F0]", text: "text-[#999999]" },
-};
-
-function StatSkeleton() {
+function DashboardSkeleton() {
   return (
-    <div className="bg-white border border-[#E3E6ED] rounded-lg p-5 animate-pulse shadow-sm min-h-[135px]">
-      <div className="h-3 w-24 bg-[#E3E6ED] rounded mb-5" />
-      <div className="h-7 w-16 bg-[#E3E6ED] rounded mb-2" />
-      <div className="h-3 w-28 bg-[#E3E6ED] rounded" />
+    <div className="space-y-5" aria-label="Loading dashboard">
+      <div className="min-h-[320px] animate-pulse rounded-2xl bg-forest/15" />
+      <div className="grid grid-cols-1 gap-px overflow-hidden rounded-xl border border-[#dfe1e7] bg-[#dfe1e7] sm:grid-cols-3">
+        {[0, 1, 2].map((item) => <div key={item} className="h-24 animate-pulse bg-white" />)}
+      </div>
+      <div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_340px]">
+        <div className="h-[360px] animate-pulse rounded-2xl bg-white" />
+        <div className="h-[360px] animate-pulse rounded-2xl bg-white" />
+      </div>
     </div>
   );
 }
@@ -130,272 +123,200 @@ export default function CustomerDashboard() {
   const [error, setError] = useState("");
   const [activeDeliveryId, setActiveDeliveryId] = useState<string | null>(null);
   const [sheetOpen, setSheetOpen] = useState(false);
+  const requestId = useRef(0);
 
-  const firstName = session?.user?.firstname || session?.user?.name?.split(" ")[0] || "there";
   const token = session?.accessToken;
-
+  const firstName = session?.user?.firstname || session?.user?.name?.split(" ")[0] || "there";
   const hour = new Date().getHours();
   const greeting = hour < 12 ? "Good morning" : hour < 17 ? "Good afternoon" : "Good evening";
 
+  const loadDashboard = useCallback(async () => {
+    if (!token) return;
+    const currentRequest = ++requestId.current;
+    setLoading(true);
+    setError("");
+    try {
+      const response = await api<DashboardStats>("/dashboard/stats", { token });
+      if (currentRequest !== requestId.current) return;
+      if (response.status === 200 && response.data) setStats(response.data);
+      else setError(response.errors?.[0] || "Dashboard data could not be loaded.");
+    } catch {
+      if (currentRequest === requestId.current) setError("Dashboard data could not be loaded.");
+    } finally {
+      if (currentRequest === requestId.current) setLoading(false);
+    }
+  }, [token]);
+
   useEffect(() => {
     if (!token) return;
-    setLoading(true);
+    const currentRequest = ++requestId.current;
     api<DashboardStats>("/dashboard/stats", { token })
-      .then((res) => {
-        if (res.status === 200 && res.data) {
-          setStats(res.data);
-        } else {
-          setError(res.errors?.[0] || "Failed to load dashboard");
-        }
+      .then((response) => {
+        if (currentRequest !== requestId.current) return;
+        if (response.status === 200 && response.data) setStats(response.data);
+        else setError(response.errors?.[0] || "Dashboard data could not be loaded.");
       })
-      .catch(() => setError("Failed to load dashboard"))
-      .finally(() => setLoading(false));
+      .catch(() => {
+        if (currentRequest === requestId.current) setError("Dashboard data could not be loaded.");
+      })
+      .finally(() => {
+        if (currentRequest === requestId.current) setLoading(false);
+      });
+    return () => { requestId.current += 1; };
   }, [token]);
+
+  function openDelivery(id: string) {
+    setActiveDeliveryId(id);
+    setSheetOpen(true);
+  }
 
   const deliveries = stats?.recentDeliveries ?? [];
   const activity = stats?.recentActivity ?? [];
-  const hasDeliveries = deliveries.length > 0;
+  const attention = stats?.attentionDelivery ?? null;
 
   return (
-    <div className="h-full flex flex-col bg-[#F5F4FD] pb-0">
-      <div className="px-5 pt-10 pb-5">
-        <div className="flex items-center justify-between mb-6">
+    <div className="min-h-full bg-[#f4f5f1] px-4 py-7 font-manrope sm:px-6 sm:py-9 xl:px-8">
+      <div className="mx-auto max-w-[1440px]">
+        <header className="mb-7 flex items-end justify-between gap-5">
           <div>
-            <p className="text-sm font-inter text-[#8094A7]">{greeting},</p>
-            <h1 className="text-2xl font-medium text-[#161618]">{firstName}</h1>
+            <p className="text-sm font-semibold text-forest-600">{greeting}, {firstName}</p>
+            <h1 className="mt-1 text-2xl font-semibold tracking-[-0.025em] text-[#161618] sm:text-3xl">Your delivery desk</h1>
+            <p className="mt-2 max-w-xl text-sm leading-6 text-[#666d80]">See what is moving, what is waiting, and what changed most recently.</p>
           </div>
-          <Link href="/dashboard/book">
-            <Button className="h-10 px-4 bg-[#F3BC24] hover:bg-[#F5C94A] rounded-[10px] text-[#173420] font-semibold text-sm gap-2 border-0">
-              <Plus size={18} weight="bold" />
-              Book a Delivery
-            </Button>
-          </Link>
-        </div>
+          <p className="hidden text-xs font-semibold uppercase tracking-[0.18em] text-[#8094a7] md:block">Customer dispatch</p>
+        </header>
 
         {error && (
-          <div className="bg-[#FCDEE0] text-[#C0392B] text-sm rounded-lg px-4 py-3 mb-4">{error}</div>
+          <div role="alert" className="mb-5 flex flex-col gap-3 rounded-xl border border-[#efb9bd] bg-[#fff4f5] px-4 py-4 text-sm text-[#8f292f] sm:flex-row sm:items-center sm:justify-between">
+            <span className="flex items-center gap-2"><WarningCircle size={20} weight="fill" />{error}</span>
+            <button type="button" onClick={loadDashboard} className="min-h-11 cursor-pointer self-start rounded-lg bg-[#8f292f] px-4 font-semibold text-white transition-colors hover:bg-[#742126] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#8f292f] focus-visible:ring-offset-2 sm:self-auto">Try again</button>
+          </div>
         )}
 
-        <div className="grid grid-cols-3 gap-[10px]">
-          {loading ? (
-            <>
-              <StatSkeleton />
-              <StatSkeleton />
-              <StatSkeleton />
-            </>
-          ) : (
-            <>
-              <div className="bg-white border border-[#E3E6ED] rounded-lg p-5 min-h-[135px] shadow-sm flex flex-col justify-between">
-                <div className="flex items-center justify-between">
-                  <span className="text-sm font-inter text-[#2D5A3A]">Active Deliveries</span>
-                  <DotsThree size={16} className="text-[#173420]" />
-                </div>
-                <div>
-                  <div className="text-2xl font-inter font-semibold text-[#173420] mb-1">
-                    {stats?.activeDeliveries ?? 0}
-                  </div>
-                  <span className="text-xs font-inter text-[#8094A7]">currently in progress</span>
-                </div>
-              </div>
-              <div className="bg-white border border-[#E3E6ED] rounded-lg p-5 min-h-[135px] shadow-sm flex flex-col justify-between">
-                <div className="flex items-center justify-between">
-                  <span className="text-sm font-inter text-[#2D5A3A]">Pending Pickups</span>
-                  <DotsThree size={16} className="text-[#173420]" />
-                </div>
-                <div>
-                  <div className="text-2xl font-inter font-semibold text-[#173420] mb-1">
-                    {stats?.pendingPickups ?? 0}
-                  </div>
-                  <span className="text-xs font-inter text-[#8094A7]">awaiting pickup</span>
-                </div>
-              </div>
-              <div className="bg-white border border-[#E3E6ED] rounded-lg p-5 min-h-[135px] shadow-sm flex flex-col justify-between">
-                <div className="flex items-center justify-between">
-                  <span className="text-sm font-inter text-[#2D5A3A]">Total Spent</span>
-                  <DotsThree size={16} className="text-[#173420]" />
-                </div>
-                <div>
-                  <div className="text-2xl font-inter font-semibold text-[#173420] mb-1">
-                    {formatCents(stats?.totalSpentCents ?? 0)}
-                  </div>
-                  <span className="text-xs font-inter text-[#8094A7]">all time</span>
-                </div>
-              </div>
-            </>
-          )}
-        </div>
-      </div>
+        {loading ? (
+          <DashboardSkeleton />
+        ) : stats ? (
+          <div className="space-y-5">
+            {attention ? (
+              <section aria-labelledby="attention-title" className="relative isolate overflow-hidden rounded-2xl bg-forest px-5 py-6 text-white shadow-[0_22px_60px_rgba(23,52,32,0.18)] sm:px-7 sm:py-7 lg:px-9">
+                <div className="absolute inset-y-0 right-0 -z-10 w-1/2 bg-[radial-gradient(circle_at_center,rgba(243,188,36,0.18),transparent_68%)]" />
+                <div className="grid gap-8 lg:grid-cols-[minmax(0,1.25fr)_minmax(320px,0.75fr)] lg:items-end">
+                  <div>
+                    <div className="flex flex-wrap items-center gap-3">
+                      <p className="text-xs font-bold uppercase tracking-[0.2em] text-sun-300">Latest active delivery</p>
+                      <StatusBadge label={statusLabels[attention.status] || attention.status} status={statusVariants[attention.status] || "pending"} className="border border-white/15" />
+                    </div>
+                    <h2 id="attention-title" className="mt-4 text-2xl font-semibold tracking-[-0.025em] sm:text-3xl">{attention.trackingNumber}</h2>
+                    <p className="mt-2 max-w-lg text-sm leading-6 text-white/65">{attention.packageDesc || "Delivery details"}</p>
 
-      <div className="px-5 flex-1 flex gap-[10px] min-h-0 pb-5">
-        <div className="flex-1 bg-[#FEFEFE] border border-[#E3E6ED] rounded-xl p-4 flex flex-col min-w-0 shadow-sm">
-          <div className="flex items-center gap-2 bg-[#f9f9fb] rounded-[10px] px-4 py-2.5 mb-4">
-            <span className="w-[10px] h-[10px] rounded-full bg-[#173420] shrink-0" />
-            <h3 className="text-base font-manrope font-medium text-[#161618]">Recent Deliveries</h3>
-            <span className="inline-flex items-center justify-center min-w-[20px] h-[20px] px-1.5 bg-white border border-[#e5e5ec] rounded-[7px] text-xs font-medium text-[#161618]">
-              {deliveries.length}
-            </span>
-            <div className="flex-1" />
-            {hasDeliveries && (
-              <Link
-                href="/dashboard/deliveries"
-                className="text-xs text-[#173420] font-medium hover:underline flex items-center gap-1"
-              >
-                View all <ArrowRight size={12} />
-              </Link>
+                    <div className="mt-7 grid gap-5 sm:grid-cols-[1fr_auto_1fr] sm:items-center">
+                      <div className="min-w-0">
+                        <p className="text-xs font-bold uppercase tracking-[0.16em] text-white/45">Pickup</p>
+                        <p className="mt-1 truncate text-base font-semibold" title={attention.pickupAddress}>{shortAddress(attention.pickupAddress)}</p>
+                      </div>
+                      <ArrowRight className="hidden text-sun-400 sm:block" size={22} aria-hidden="true" />
+                      <div className="min-w-0">
+                        <p className="text-xs font-bold uppercase tracking-[0.16em] text-white/45">Dropoff</p>
+                        <p className="mt-1 truncate text-base font-semibold" title={attention.dropoffAddress}>{shortAddress(attention.dropoffAddress)}</p>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="border-t border-white/15 pt-6 lg:border-l lg:border-t-0 lg:pl-8 lg:pt-0">
+                    <div className="flex items-end justify-between gap-4">
+                      <div>
+                        <p className="text-xs font-bold uppercase tracking-[0.16em] text-white/45">Route progress</p>
+                        <p className="mt-2 text-4xl font-semibold tracking-[-0.04em] text-sun-400">{progressForStatus(attention.status)}%</p>
+                      </div>
+                      <p className="text-right text-xs leading-5 text-white/55">Updated<br />{timeAgo(attention.updatedAt || attention.createdAt)}</p>
+                    </div>
+                    <div className="mt-4 h-2 overflow-hidden rounded-full bg-white/15" aria-label={`${progressForStatus(attention.status)} percent complete`}>
+                      <div className="h-full rounded-full bg-sun-500" style={{ width: `${progressForStatus(attention.status)}%` }} />
+                    </div>
+                    <button type="button" onClick={() => openDelivery(attention.id)} className="mt-6 inline-flex min-h-12 w-full cursor-pointer items-center justify-center gap-2 rounded-lg bg-sun-500 px-5 text-sm font-bold text-forest transition-colors hover:bg-sun-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-forest">
+                      View delivery <ArrowRight size={17} weight="bold" />
+                    </button>
+                  </div>
+                </div>
+              </section>
+            ) : (
+              <section aria-labelledby="attention-title" className="grid gap-5 rounded-2xl border border-forest/10 bg-[#edf2ea] px-5 py-7 sm:grid-cols-[auto_1fr_auto] sm:items-center sm:px-7">
+                <span className="inline-flex size-12 items-center justify-center rounded-full bg-white text-forest shadow-sm"><CheckCircle size={25} weight="fill" /></span>
+                <div>
+                  <p className="text-xs font-bold uppercase tracking-[0.18em] text-forest-600">All clear</p>
+                  <h2 id="attention-title" className="mt-1 text-xl font-semibold text-forest">No active deliveries right now.</h2>
+                  <p className="mt-1 text-sm text-[#666d80]">Your completed delivery history is still available below.</p>
+                </div>
+                <Link href="/dashboard/book" className="inline-flex min-h-12 items-center justify-center rounded-lg bg-forest px-5 text-sm font-bold text-white transition-colors hover:bg-forest-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-forest focus-visible:ring-offset-2">Book a delivery</Link>
+              </section>
             )}
-          </div>
 
-          {loading ? (
-            <div className="animate-pulse flex-1">
-              {[...Array(4)].map((_, i) => (
-                <div key={i} className="flex items-center gap-6 py-3.5 border-b border-[#f3f4f6]">
-                  <div className="h-3 w-28 bg-[#E3E6ED] rounded" />
-                  <div className="h-3 w-40 bg-[#E3E6ED] rounded" />
-                  <div className="h-3 w-40 bg-[#E3E6ED] rounded" />
-                  <div className="h-3 w-16 bg-[#E3E6ED] rounded" />
-                  <div className="h-5 w-24 bg-[#E3E6ED] rounded-full" />
-                </div>
-              ))}
-            </div>
-          ) : !hasDeliveries ? (
-            <div className="flex-1 flex flex-col items-center justify-center text-center py-12">
-              <Cube size={40} className="text-[#E3E6ED] mb-4" />
-              <p className="text-sm font-medium text-[#666D80] mb-1">No deliveries yet</p>
-              <p className="text-xs text-[#8094A7] mb-4">Book your first delivery to get started</p>
-              <Link
-                href="/dashboard/book"
-                className="text-sm text-[#173420] font-medium hover:underline flex items-center gap-1"
-              >
-                Book your first delivery <ArrowRight size={14} />
+            <section aria-label="Delivery summary" className="grid grid-cols-1 gap-px overflow-hidden rounded-xl border border-[#dfe1e7] bg-[#dfe1e7] sm:grid-cols-3">
+              <Link href="/dashboard/deliveries" className="group flex min-h-24 items-center justify-between bg-white px-5 py-4 transition-colors hover:bg-forest-50 focus-visible:z-10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-forest">
+                <span><span className="block text-xs font-bold uppercase tracking-[0.14em] text-[#8094a7]">Active</span><span className="mt-1 block text-2xl font-semibold text-forest">{stats.activeDeliveries}</span></span>
+                <Truck size={22} className="text-forest-600 transition-transform group-hover:translate-x-0.5" />
               </Link>
-            </div>
-          ) : (
-            <div className="flex-1 overflow-auto">
-              <table className="w-full text-sm font-manrope">
-                <thead>
-                  <tr className="border-b border-[#e2e4e9]/30">
-                    <th className="text-left font-manrope text-[14px] font-medium text-[#44444a] py-3 px-3 bg-[#f9f9fb] rounded-l-lg whitespace-nowrap">Tracking ID</th>
-                    <th className="text-left font-manrope text-[14px] font-medium text-[#44444a] py-3 px-3 bg-[#f9f9fb]">Pickup</th>
-                    <th className="text-left font-manrope text-[14px] font-medium text-[#44444a] py-3 px-3 bg-[#f9f9fb]">Dropoff</th>
-                    <th className="text-left font-manrope text-[14px] font-medium text-[#44444a] py-3 px-3 bg-[#f9f9fb]">Date</th>
-                    <th className="text-left font-manrope text-[14px] font-medium text-[#44444a] py-3 px-3 bg-[#f9f9fb]">Status</th>
-                    <th className="text-left font-manrope text-[14px] font-medium text-[#44444a] py-3 px-3 bg-[#f9f9fb]">Progress</th>
-                    <th className="text-left font-manrope text-[14px] font-medium text-[#44444a] py-3 px-3 bg-[#f9f9fb] rounded-r-lg"></th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {deliveries.map((d) => {
-                    const pill = statusPillStyles[d.status] || { bg: "bg-[#F0F0F0]", text: "text-[#999999]" };
-                    const pct = progressByStatus[d.status] ?? 10;
-                    return (
-                      <tr
-                        key={d.id}
-                        onClick={() => {
-                          setActiveDeliveryId(d.id);
-                          setSheetOpen(true);
-                        }}
-                        className="border-b border-[#f3f4f6] last:border-0 cursor-pointer hover:bg-[#F8F8FA] transition-colors"
-                      >
-                        <td className="text-[#161618] py-3.5 px-3 font-medium whitespace-nowrap">{d.trackingNumber}</td>
-                        <td className="text-[#333333] py-3.5 px-3 max-w-[150px]">
-                          <div className="flex items-center gap-1.5 min-w-0">
-                            <MapPin size={13} className="text-[#173420] shrink-0" />
-                            <span className="truncate">{d.pickupAddress || "—"}</span>
-                          </div>
-                        </td>
-                        <td className="text-[#333333] py-3.5 px-3 max-w-[150px]">
-                          <div className="flex items-center gap-1.5 min-w-0">
-                            <MapPin size={13} className="text-[#40C4AA] shrink-0" />
-                            <span className="truncate">{d.dropoffAddress || "—"}</span>
-                          </div>
-                        </td>
-                        <td className="text-[#333333] py-3.5 px-3 whitespace-nowrap">{formatDate(d.createdAt)}</td>
-                        <td className="py-3.5 px-3">
-                          <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-[6px] text-xs font-medium ${pill.bg} ${pill.text}`}>
-                            <span className="w-1.5 h-1.5 rounded-full bg-current" />
-                            {(statusLabels[d.status] || d.status).toUpperCase()}
-                          </span>
-                        </td>
-                        <td className="py-3.5 px-3">
-                          <div className="flex items-center gap-2">
-                            <div className="w-[75px] h-[6px] bg-[#f1f1f5] rounded-full overflow-hidden">
-                              <div className="h-full bg-[#40C4AA] rounded-full" style={{ width: `${pct}%` }} />
-                            </div>
-                            <span className="text-xs text-[#44444a]">{pct}%</span>
-                          </div>
-                        </td>
-                        <td className="py-3.5 px-3">
-                          <button
-                            type="button"
-                            aria-label={`View ${d.trackingNumber} details`}
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              setActiveDeliveryId(d.id);
-                              setSheetOpen(true);
-                            }}
-                            className="w-10 h-10 flex items-center justify-center bg-white border border-[#f1f1f5] rounded-[10px] hover:bg-[#F8F8FA] transition-colors"
-                          >
-                            <DotsThree size={16} className="text-[#252528]" />
-                          </button>
-                        </td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
-            </div>
-          )}
-        </div>
+              <Link href="/dashboard/deliveries" className="group flex min-h-24 items-center justify-between bg-white px-5 py-4 transition-colors hover:bg-sun-50 focus-visible:z-10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-forest">
+                <span><span className="block text-xs font-bold uppercase tracking-[0.14em] text-[#8094a7]">Pending pickup</span><span className="mt-1 block text-2xl font-semibold text-forest">{stats.pendingPickups}</span></span>
+                <Clock size={22} className="text-[#9a6a00]" />
+              </Link>
+              <Link href="/dashboard/invoices" className="group flex min-h-24 items-center justify-between bg-white px-5 py-4 transition-colors hover:bg-forest-50 focus-visible:z-10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-forest">
+                <span><span className="block text-xs font-bold uppercase tracking-[0.14em] text-[#8094a7]">Total spent</span><span className="mt-1 block text-2xl font-semibold text-forest">{formatCents(stats.totalSpentCents)}</span></span>
+                <Receipt size={22} className="text-forest-600" />
+              </Link>
+            </section>
 
-        <div className="hidden lg:flex w-[299px] bg-[#FEFEFE] border border-[#E3E6ED] rounded-xl p-4 flex-col shrink-0 shadow-sm">
-          <h3 className="text-sm font-manrope text-[#333333] mb-4">Recent Activity</h3>
-          {loading ? (
-            <div className="animate-pulse space-y-4">
-              {[...Array(4)].map((_, i) => (
-                <div key={i} className="flex gap-3">
-                  <div className="w-9 h-9 rounded-full bg-[#E3E6ED] shrink-0" />
-                  <div className="flex-1">
-                    <div className="h-3 w-32 bg-[#E3E6ED] rounded mb-1" />
-                    <div className="h-3 w-16 bg-[#E3E6ED] rounded" />
-                  </div>
+            <div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_340px]">
+              <section aria-labelledby="recent-deliveries-title" className="overflow-hidden rounded-2xl border border-[#dfe1e7] bg-white">
+                <div className="flex items-center justify-between gap-4 border-b border-[#e3e6ed] px-5 py-4 sm:px-6">
+                  <div><p className="text-xs font-bold uppercase tracking-[0.16em] text-forest-600">Operations</p><h2 id="recent-deliveries-title" className="mt-1 text-lg font-semibold text-[#161618]">Recent deliveries</h2></div>
+                  {deliveries.length > 0 && <Link href="/dashboard/deliveries" className="inline-flex min-h-11 items-center gap-2 text-sm font-bold text-forest hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-forest focus-visible:ring-offset-2">View all <ArrowRight size={15} /></Link>}
                 </div>
-              ))}
-            </div>
-          ) : activity.length === 0 ? (
-            <div className="flex-1 flex flex-col items-center justify-center text-center py-8">
-              <Clock size={32} className="text-[#E3E6ED] mb-3" />
-              <p className="text-xs text-[#8094A7]">No recent activity</p>
-            </div>
-          ) : (
-            <div className="flex-1 overflow-auto space-y-0">
-              {activity.map((a, i) => (
-                <div key={a.id} className="flex gap-3 pb-4 relative">
-                  {i < activity.length - 1 && (
-                    <div className="absolute left-[17px] top-9 bottom-0 w-px bg-[#E0E0E0]" />
-                  )}
-                  <div className={`w-9 h-9 rounded-3xl flex items-center justify-center shrink-0 ${activityBg[a.status] || "bg-[#F0F0F0]"}`}>
-                    {activityIcons[a.status] || <Package size={18} className="text-[#8094A7]" />}
+                {deliveries.length === 0 ? (
+                  <div className="flex min-h-64 flex-col items-center justify-center px-6 text-center"><Cube size={36} className="text-[#a4acb9]" /><p className="mt-4 font-semibold text-[#333]">No deliveries yet</p><p className="mt-1 text-sm text-[#8094a7]">Book your first delivery to start tracking it here.</p></div>
+                ) : (
+                  <div className="divide-y divide-[#edf0ea]">
+                    {deliveries.map((delivery) => {
+                      const progress = progressForStatus(delivery.status);
+                      return (
+                        <button key={delivery.id} type="button" onClick={() => openDelivery(delivery.id)} className="group grid w-full cursor-pointer gap-4 px-5 py-4 text-left transition-colors hover:bg-forest-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-forest sm:grid-cols-[minmax(170px,0.7fr)_minmax(240px,1.3fr)_minmax(170px,0.8fr)_auto] sm:items-center sm:px-6">
+                          <div className="min-w-0"><p className="font-semibold text-forest">{delivery.trackingNumber}</p><p className="mt-1 truncate text-xs text-[#8094a7]">{delivery.packageDesc || "Delivery"}</p></div>
+                          <div className="flex min-w-0 items-center gap-3"><MapPin size={17} className="shrink-0 text-forest-600" /><p className="min-w-0 truncate text-sm text-[#333]" title={`${delivery.pickupAddress} to ${delivery.dropoffAddress}`}>{shortAddress(delivery.pickupAddress)} <span className="text-[#a4acb9]">→</span> {shortAddress(delivery.dropoffAddress)}</p></div>
+                          <div className="min-w-0"><div className="flex items-center justify-between gap-2"><StatusBadge label={statusLabels[delivery.status] || delivery.status} status={statusVariants[delivery.status] || "pending"} /><span className="text-xs font-semibold text-[#666d80]">{progress}%</span></div><div className="mt-2 h-1.5 overflow-hidden rounded-full bg-[#edf0ea]"><div className="h-full rounded-full bg-forest-600" style={{ width: `${progress}%` }} /></div></div>
+                          <div className="flex items-center justify-between gap-3 sm:block sm:text-right"><span className="text-xs text-[#8094a7]">{formatDate(delivery.createdAt)}</span><ArrowRight size={16} className="text-forest opacity-70 transition-transform group-hover:translate-x-0.5 sm:ml-auto sm:mt-2" /></div>
+                        </button>
+                      );
+                    })}
                   </div>
-                  <div className="min-w-0">
-                    <p className="text-xs font-manrope text-[#333333] leading-[1.5]">
-                      {a.trackingNumber}{a.note ? ` — ${a.note}` : ""}
-                    </p>
-                    <p className="text-xs font-manrope text-[#757575]">{timeAgo(a.createdAt)}</p>
-                  </div>
-                </div>
-              ))}
+                )}
+              </section>
+
+              <aside aria-labelledby="recent-activity-title" className="rounded-2xl border border-[#dfe1e7] bg-white px-5 py-5 sm:px-6">
+                <div className="flex items-center justify-between"><div><p className="text-xs font-bold uppercase tracking-[0.16em] text-forest-600">Timeline</p><h2 id="recent-activity-title" className="mt-1 text-lg font-semibold text-[#161618]">Recent activity</h2></div><TrendUp size={20} className="text-forest-600" /></div>
+                {activity.length === 0 ? (
+                  <div className="flex min-h-64 flex-col items-center justify-center text-center"><Clock size={32} className="text-[#a4acb9]" /><p className="mt-3 text-sm text-[#8094a7]">No recent activity</p></div>
+                ) : (
+                  <ol className="mt-6 space-y-0">
+                    {activity.map((item, index) => (
+                      <li key={item.id} className="relative flex gap-3 pb-5 last:pb-0">
+                        {index < activity.length - 1 && <span className="absolute bottom-0 left-[17px] top-9 w-px bg-[#dfe8d6]" aria-hidden="true" />}
+                        <span className={`relative z-10 inline-flex size-9 shrink-0 items-center justify-center rounded-full ${activityTone[item.status] || "bg-[#f0f0f0] text-[#666d80]"}`}>{activityIcons[item.status] || <Package size={18} />}</span>
+                        <button type="button" onClick={() => openDelivery(item.deliveryId)} className="min-w-0 cursor-pointer rounded-md text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-forest focus-visible:ring-offset-2">
+                          <span className="block text-sm font-semibold text-[#333] hover:text-forest">{statusLabels[item.status] || item.status}</span>
+                          <span className="mt-0.5 block text-xs leading-5 text-[#666d80]">{item.trackingNumber}{item.note ? ` · ${item.note}` : ""}</span>
+                          <span className="mt-1 block text-xs font-medium text-[#8094a7]">{timeAgo(item.createdAt)}</span>
+                        </button>
+                      </li>
+                    ))}
+                  </ol>
+                )}
+              </aside>
             </div>
-          )}
-        </div>
+          </div>
+        ) : null}
       </div>
 
-      {/* Delivery detail side sheet */}
-      <DeliveryDetailSheet
-        open={sheetOpen}
-        id={activeDeliveryId}
-        token={token}
-        onClose={() => setSheetOpen(false)}
-      />
+      <DeliveryDetailSheet open={sheetOpen} id={activeDeliveryId} token={token} onClose={() => setSheetOpen(false)} />
     </div>
   );
 }

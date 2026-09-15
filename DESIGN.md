@@ -63,23 +63,53 @@ Always alias the source.
 - `AppShell` (`src/components/layouts/AppShell.tsx`) is the one shell for
   admin, customer, and courier. It owns the brand lock-up, sidebar, mobile
   overlay, header, page title, header action, and account avatar.
-- Sidebar: 272px. Header: 79px. Content scrolls inside the shell.
+- Sidebar: 280px. Header: 80px. Content scrolls inside the shell.
+- The authenticated shell uses a 280px deep-forest **dispatch rail** with a
+  sun current-route marker, restrained translucent selection fields, and a
+  compact signed-in identity block. This is the shared treatment for all
+  customer, courier, and admin workspaces.
+- The 80px application header sits on a warm neutral field and shows the
+  workspace context above the active route. Its account control and primary
+  action remain stable 44px targets.
+- Authenticated content uses `#F3F5F1` as its canvas; white is reserved for
+  purposeful surfaces rather than being the default background for every
+  region.
 - Mobile (<1024px): sidebar is a fixed drawer (z-50); a full-viewport scrim
   (z-40) sits behind it and closes on tap. Desktop (>=1024px): sidebar is
   static and always visible; the collapse control is only meaningful on the
   drawer.
+- Customer overview pages use an **attention-first dispatch hierarchy**:
+  one dominant operational state, one compact metrics strip, then supporting
+  lists and timelines. Do not give every block equal white-card emphasis.
+- The dominant customer-dashboard panel uses forest as the structural field;
+  sun is reserved for its primary action and live progress emphasis.
+- Dashboard headings and operational UI use Manrope. Clash Display remains
+  marketing-only, including on authenticated overview pages.
+- Overview loading states reserve the final panel and list geometry; errors
+  remain inline, actionable, and do not displace the application shell.
 - `BrandMark` is the shared lock-up. `PublicHeader` gives non-marketing public
   routes (tracking, auth, legal) a way home without the full navbar.
 - Role layouts: `AdminLayout`, `CustomerLayout`, `CourierLayout`.
 
 ## 4. Components
 
+- **Delivery sheets**: full-screen on narrow viewports and a maximum 680px
+  right rail on larger screens. They use a sticky operational header, reserved
+  map geometry, one primary role-specific action, and low-emphasis supporting
+  sections on the application canvas.
+- **Customer workspaces**: page introductions use an operational eyebrow,
+  outcome-led heading, and one supporting sentence. Data regions use a single
+  bordered surface with internal grouping instead of equal-weight card grids.
 - **Status badges** (`StatusBadge`, `statusPillStyles`): colour + text label,
   never colour alone; `whitespace-nowrap`, `text-xs`.
 - **Buttons**: forest for primary, sun for the single marketing CTA, outline
   for secondary. CTA heights 40–48px.
 - **Focus**: one global `:focus-visible` treatment — 2px forest outline with a
   2px offset.
+- **Scrollbars**: the global application scrollbar uses a light forest track
+  and muted forest thumb; forced-colour behavior remains system-owned.
+- **Reduced motion**: global transitions and animations collapse to an
+  effectively immediate duration when `prefers-reduced-motion` is enabled.
 - **Icons**: Phosphor; regular default, fill for active/selected.
 
 ## 5. Accessibility

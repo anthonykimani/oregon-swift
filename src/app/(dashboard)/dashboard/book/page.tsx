@@ -230,16 +230,16 @@ export default function BookDeliveryPage() {
   const selectedService = serviceTypes.find((st) => st.id === form.serviceTypeId);
 
   return (
-    <div className="h-full flex flex-col bg-[#F5F4FD] overflow-y-auto">
+    <div className="h-full flex flex-col bg-[#F3F5F1] overflow-y-auto">
       <div className="px-4 sm:px-6 pt-8 pb-4">
-        <h1 className="text-xl font-clash-display font-semibold text-[#173420]">
-          Book a Delivery
-        </h1>
+        <p className="text-xs font-bold uppercase tracking-[0.14em] text-forest-600">New delivery</p>
+        <h1 className="mt-1 text-2xl font-manrope font-semibold tracking-[-0.02em] text-[#173420]">Plan the route, then confirm</h1>
+        <p className="mt-1 text-sm text-[#666D80]">Addresses first, package details next, final review last.</p>
       </div>
 
       {/* Step Indicator */}
       <div className="px-4 sm:px-6 pb-6">
-        <div className="flex items-center gap-1 sm:gap-2">
+        <div className="flex max-w-3xl items-center gap-1 rounded-2xl border border-[#DCE2D9] bg-white p-3 shadow-sm sm:gap-2">
           {steps.map((s, i) => (
             <div key={s} className="flex items-center gap-1 sm:gap-2 flex-1">
               <div className="flex items-center gap-2">
@@ -283,7 +283,7 @@ export default function BookDeliveryPage() {
 
         {/* Price Estimate Bar */}
         {estimate && (
-          <div className="bg-white border border-[#E3E6ED] rounded-xl px-4 py-3 mb-4 flex items-center justify-between max-w-3xl">
+          <div className="bg-white border border-[#DCE2D9] rounded-2xl px-4 py-3 mb-4 flex items-center justify-between max-w-3xl">
             <div className="flex items-center gap-2 text-sm">
               <span className="text-[#666D80]">Estimated cost:</span>
               <span className="text-[#173420] font-semibold">${(estimate.priceCents / 100).toFixed(2)}</span>
@@ -489,7 +489,7 @@ export default function BookDeliveryPage() {
       </div>
 
       {/* Footer Navigation */}
-      <div className="fixed bottom-0 left-0 lg:left-[272px] right-0 bg-white border-t border-[#E3E6ED] px-4 sm:px-6 py-3">
+      <div className="fixed bottom-0 left-0 right-0 border-t border-[#DCE2D9] bg-white/95 px-4 py-3 backdrop-blur lg:left-[280px] sm:px-6">
         <div className="max-w-3xl mx-auto flex items-center justify-between">
           <Button
             onClick={() => setStep(Math.max(0, step - 1))}
