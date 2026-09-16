@@ -2,6 +2,7 @@
 
 import { CaretDown, Globe, List, X } from "@phosphor-icons/react/dist/ssr";
 import Link from "next/link";
+import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
 
@@ -25,17 +26,16 @@ export default function Navbar() {
       }`}
       aria-label="Primary navigation"
     >
-      <Link href="/" className="flex min-w-0 flex-1 items-center gap-3 transition-opacity hover:opacity-80">
-        <span className={`flex size-9 shrink-0 items-center justify-center rounded-md border ${isHome ? "border-white/35 bg-white/10" : "border-transparent bg-forest"}`}>
-          <svg viewBox="0 0 24 24" className="size-5" fill="none" aria-hidden>
-            <path d="M3.5 17c3.5 0 4.5-10 8.5-10s4.5 6 8.5 6" stroke="#f4f1e8" strokeWidth="2" strokeLinecap="round" />
-            <circle cx="3.5" cy="17" r="1.6" fill="#f4f1e8" />
-            <circle cx="20.5" cy="13" r="2.6" fill="#f3bc24" />
-          </svg>
-        </span>
-        <span className={`truncate font-clash-display text-lg font-medium tracking-[-0.02em] xl:text-xl ${isHome ? "text-white" : "text-brand"}`}>
-          Oregon Swift Deliveries
-        </span>
+      <Link href="/" aria-label="Oregon Swift Deliveries home" className={`flex shrink-0 items-center rounded-xl transition-opacity hover:opacity-85 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sun-500 ${isHome ? "bg-white/[0.96] px-1.5 py-1 shadow-sm" : ""}`}>
+        <Image
+          src="/images/oregon-swift-deliveries-logo.png"
+          alt=""
+          width={1254}
+          height={1254}
+          sizes="(max-width: 640px) 64px, 76px"
+          className="h-auto w-16 object-contain sm:w-[76px]"
+          priority
+        />
       </Link>
 
       <div className="hidden shrink-0 items-center gap-7 xl:flex">

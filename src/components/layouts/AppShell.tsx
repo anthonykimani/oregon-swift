@@ -115,10 +115,7 @@ export function AppShell({
         navigationOpen ? "translate-x-0" : "-translate-x-full"
       )}>
         <div className="flex h-24 items-center justify-between border-b border-white/10 px-5">
-          <div>
-            <BrandMark href={userHref} tone="inverse" />
-            <p className="mt-1 pl-[42px] text-[11px] font-semibold uppercase tracking-[0.18em] text-white/45">{workspace}</p>
-          </div>
+          <BrandMark href={userHref} tone="inverse" />
           <button type="button" onClick={() => setNavigationOpen(false)} aria-label="Close navigation" className="flex size-11 items-center justify-center rounded-xl text-white/70 hover:bg-white/10 hover:text-white lg:hidden">
             <X size={20} weight="bold" />
           </button>

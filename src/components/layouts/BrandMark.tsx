@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Image from "next/image";
 import { cn } from "@/lib/utils";
 
 interface BrandMarkProps {
@@ -22,22 +23,24 @@ export function BrandMark({
     <Link
       href={href}
       aria-label="Oregon Swift Deliveries home"
-      className={cn("inline-flex items-center gap-2.5 rounded-lg", className)}
-    >
-      <span className={cn(
-        "w-8 h-8 shrink-0 rounded-md flex items-center justify-center text-sm font-bold",
-        tone === "inverse" ? "bg-sun-500 text-forest" : "bg-forest text-white"
-      )}>
-        OS
-      </span>
-      {showWordmark && (
-        <span className={cn(
-          "font-manrope text-lg font-semibold whitespace-nowrap",
-          tone === "inverse" ? "text-white" : "text-forest"
-        )}>
-          Oregon Swift
-        </span>
+      className={cn(
+        "inline-flex shrink-0 items-center rounded-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sun-500 focus-visible:ring-offset-2",
+        tone === "inverse" && "bg-white/[0.96] px-1.5 py-1 shadow-sm ring-1 ring-black/5",
+        className
       )}
+    >
+      <Image
+        src="/images/oregon-swift-deliveries-logo.png"
+        alt=""
+        width={1254}
+        height={1254}
+        sizes={showWordmark ? "(max-width: 640px) 64px, 76px" : "48px"}
+        className={cn(
+          "block h-auto object-contain",
+          showWordmark ? "w-16 sm:w-[76px]" : "w-12"
+        )}
+        priority
+      />
     </Link>
   );
 }

@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Image from "next/image";
 
 export default function AuthLayout({
   children,
@@ -15,10 +16,14 @@ export default function AuthLayout({
             aria-label="Oregon Swift Deliveries home"
             className="inline-flex rounded-xl"
           >
-            <img
-              src="/svg/auth-logo.svg"
-              alt="Oregon Swift Deliveries"
-              className="h-[88px] w-auto mx-auto block"
+            <Image
+              src="/images/oregon-swift-deliveries-logo.png"
+              alt=""
+              width={1254}
+              height={1254}
+              sizes="144px"
+              className="mx-auto block h-auto w-36 rounded-2xl bg-white/[0.96] p-2 shadow-sm"
+              priority
             />
           </Link>
 
@@ -41,11 +46,16 @@ export default function AuthLayout({
       </div>
       <div className="flex-1 flex flex-col items-center px-6 py-8 sm:py-12 overflow-y-auto">
         <div className="w-full max-w-md flex items-center justify-between mb-8">
-          <Link
-            href="/"
-            className="lg:hidden font-clash-display text-lg text-forest"
-          >
-            Oregon Swift
+          <Link href="/" aria-label="Oregon Swift Deliveries home" className="rounded-xl lg:hidden">
+            <Image
+              src="/images/oregon-swift-deliveries-logo.png"
+              alt=""
+              width={1254}
+              height={1254}
+              sizes="72px"
+              className="h-auto w-[72px] object-contain"
+              priority
+            />
           </Link>
           <Link
             href="/"

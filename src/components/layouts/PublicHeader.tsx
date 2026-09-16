@@ -12,7 +12,7 @@ interface PublicHeaderProps {
 export function PublicHeader({ right }: PublicHeaderProps) {
   return (
     <header className="border-b border-[#E3E6ED] bg-white">
-      <div className="max-w-[1240px] mx-auto flex items-center justify-between gap-4 px-4 sm:px-6 h-16">
+      <div className="max-w-[1240px] mx-auto flex min-h-20 items-center justify-between gap-4 px-4 py-2 sm:px-6">
         <BrandMark />
         <div className="flex items-center gap-4">
           {right}
