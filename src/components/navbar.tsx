@@ -26,14 +26,14 @@ export default function Navbar() {
       }`}
       aria-label="Primary navigation"
     >
-      <Link href="/" aria-label="Oregon Swift Deliveries home" className={`flex shrink-0 items-center rounded-xl transition-opacity hover:opacity-85 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sun-500 ${isHome ? "bg-white/[0.96] px-1.5 py-1 shadow-sm" : ""}`}>
+      <Link href="/" aria-label="Oregon Swift Deliveries home" className="flex shrink-0 items-center rounded-xl transition-opacity hover:opacity-85 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sun-500">
         <Image
           src="/images/oregon-swift-deliveries-logo.png"
           alt=""
           width={1254}
           height={1254}
           sizes="(max-width: 640px) 64px, 76px"
-          className="h-auto w-16 object-contain sm:w-[76px]"
+          className="h-auto w-16 object-contain drop-shadow-[0_2px_8px_rgba(0,0,0,0.32)] sm:w-[76px]"
           priority
         />
       </Link>
