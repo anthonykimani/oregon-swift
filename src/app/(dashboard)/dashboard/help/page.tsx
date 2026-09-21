@@ -51,7 +51,7 @@ export default function HelpPage() {
           <p className="text-sm text-[#666D80]">Need help? Reach out to our support team.</p>
           <div className="flex items-center gap-3">
             <Envelope size={16} className="text-[#8094A7]" />
-            <span className="text-sm text-[#173420] font-medium">support@oregonswift.com</span>
+            <span className="text-sm text-[#173420] font-medium">oregonswiftdeliveries@gmail.com</span>
           </div>
         </div>
       </div>

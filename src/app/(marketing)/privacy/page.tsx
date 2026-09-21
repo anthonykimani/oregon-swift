@@ -42,7 +42,7 @@ const sections: LegalSection[] = [
   {
     heading: "6. Contact",
     paragraphs: [
-      "Questions about this policy can be directed to support@oregonswift.com or (503) 555-0123.",
+      "Questions about this policy can be directed to oregonswiftdeliveries@gmail.com or +1 (503) 705-0431.",
     ],
   },
 ];

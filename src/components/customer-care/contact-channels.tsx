@@ -3,18 +3,27 @@ import {
   EnvelopeSimple,
   Clock,
   MapPin,
+  Buildings,
 } from "@phosphor-icons/react/dist/ssr";
 
 const channels = [
   {
     icon: Phone,
     title: "Phone",
-    lines: ["(503) 555-0123", "Mon–Fri, 8am–6pm PT"],
+    lines: ["+1 (503) 705-0431", "Mon–Fri, 8am–6pm PT"],
   },
   {
     icon: EnvelopeSimple,
     title: "Email",
-    lines: ["support@oregonswift.com", "We reply within one business day"],
+    lines: [
+      "oregonswiftdeliveries@gmail.com",
+      "We reply within one business day",
+    ],
+  },
+  {
+    icon: Buildings,
+    title: "Office",
+    lines: ["1107 NW 15th Ave, Suite 334", "Gresham, OR 97030"],
   },
   {
     icon: Clock,
@@ -34,7 +43,7 @@ const channels = [
 export default function ContactChannels() {
   return (
     <section className="bg-[#fcfcfc] px-6 lg:px-[100px] pb-8 md:pb-12">
-      <div className="max-w-[1240px] mx-auto grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+      <div className="max-w-[1240px] mx-auto grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-6">
         {channels.map((channel) => {
           const Icon = channel.icon;
           return (
@@ -52,7 +61,7 @@ export default function ContactChannels() {
                 {channel.lines.map((line) => (
                   <p
                     key={line}
-                    className="font-dm-sans text-base text-[#504c4c]"
+                    className="font-dm-sans text-base text-[#504c4c] break-words"
                   >
                     {line}
                   </p>

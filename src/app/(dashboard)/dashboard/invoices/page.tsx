@@ -500,7 +500,7 @@ function InvoicesContent() {
                   <div className="min-w-0">
                     <p className="text-[#8094A7] mb-0.5">Bill From</p>
                     <p className="text-[#333333] font-medium">Oregon Swift Deliveries</p>
-                    <p className="text-[#757575]">billing@oregonswift.com</p>
+                    <p className="text-[#757575]">oregonswiftdeliveries@gmail.com</p>
                   </div>
                   <div className="min-w-0">
                     <p className="text-[#8094A7] mb-0.5">Bill To</p>

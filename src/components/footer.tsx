@@ -94,6 +94,28 @@ export default function Footer() {
               Questions about a shipment, or need a quote? Our dispatch team is
               here to help.
             </p>
+            <ul
+              className="mt-5 space-y-2 font-manrope text-sm xl:text-base"
+              style={{ color: "#3a3a3a" }}
+            >
+              <li>1107 NW 15th Ave, Suite 334, Gresham, OR 97030</li>
+              <li>
+                <a
+                  href="mailto:oregonswiftdeliveries@gmail.com"
+                  className="hover:opacity-70 transition-opacity"
+                >
+                  oregonswiftdeliveries@gmail.com
+                </a>
+              </li>
+              <li>
+                <a
+                  href="tel:+15037050431"
+                  className="hover:opacity-70 transition-opacity"
+                >
+                  +1 (503) 705-0431
+                </a>
+              </li>
+            </ul>
             <div className="flex flex-wrap items-center gap-3 mt-6">
               <a
                 href="/customer-care"
