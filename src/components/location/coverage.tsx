@@ -45,7 +45,8 @@ export default function Coverage() {
               </div>
               <p className="font-dm-sans text-lg text-[#161618] leading-relaxed">
                 We also provide reliable interstate transportation to
-                Washington, Idaho, California, and Nevada.
+                Washington, Idaho, California, and Nevada — including Sparks,
+                Los Angeles, and San Diego.
               </p>
             </li>
           </ul>

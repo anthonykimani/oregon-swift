@@ -23,11 +23,11 @@ const regions = [
   },
   {
     state: "California",
-    cities: ["Redding", "Eureka", "Sacramento"],
+    cities: ["Eureka", "Los Angeles", "Redding", "Sacramento", "San Diego"],
   },
   {
     state: "Nevada",
-    cities: ["Reno", "Carson City"],
+    cities: ["Carson City", "Reno", "Sparks"],
   },
 ];
 

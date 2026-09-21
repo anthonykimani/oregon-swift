@@ -7,7 +7,7 @@ import CtaPanel from "@/components/shared/cta-panel";
 export const metadata: Metadata = {
   title: "Service Areas — Oregon Swift Deliveries",
   description:
-    "Oregon Swift Deliveries serves the Portland metro area, the Willamette Valley, and interstate routes across Washington, Idaho, California, and Nevada.",
+    "Oregon Swift Deliveries serves the Portland metro area, the Willamette Valley, and interstate routes across Washington, Idaho, California, and Nevada, including Sparks, Los Angeles, and San Diego.",
 };
 
 export default function LocationPage() {
